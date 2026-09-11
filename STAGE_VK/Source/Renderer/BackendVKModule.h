@@ -60,6 +60,9 @@ public:
     VkInstance GetInstance() const { return instance; }
     VkSurfaceKHR GetSurface() const { return surface; }
     VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
+    VkDevice GetDevice() const { return device; }
+    VkQueue GetGraphicsQueue() const { return graphicsQueue; }
+    VkQueue GetPresentQueue() const { return presentQueue; }
 
 private:
     // Vulkan Initialization
@@ -68,6 +71,7 @@ private:
 
     void PickPhysicalDevice();
     bool IsDeviceSuitable(VkPhysicalDevice device) const;
+    void CreateLogicalDevice();
 
     std::vector<const char*> GetRequiredExtensions() const;
     bool CheckValidationLayerSupport() const;
@@ -85,6 +89,11 @@ private:
     VkSurfaceKHR surface = VK_NULL_HANDLE;
     VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    VkDevice device = VK_NULL_HANDLE;
+    VkQueue graphicsQueue = VK_NULL_HANDLE;
+    VkQueue presentQueue = VK_NULL_HANDLE;
 
     QueueFamilyIndices queueFamilies;
+
+
 };

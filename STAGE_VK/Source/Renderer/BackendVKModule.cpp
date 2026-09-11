@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <cstring>
 #include <iostream>
+#include <set>
 
 namespace
 {
@@ -27,6 +28,7 @@ bool BackendVKModule::Init()
     CreateDebugMessenger();
     CreateSurface(app->GetWindow().GetNativeHandle());
     PickPhysicalDevice();
+    CreateLogicalDevice();
 
     return true;
 }
@@ -51,6 +53,12 @@ void BackendVKModule::OnResize(int width, int height)
 bool BackendVKModule::CleanUp()
 {
 
+    if (device != VK_NULL_HANDLE)
+    {
+        vkDestroyDevice(device, nullptr);
+        device = VK_NULL_HANDLE;
+    }
+
     if (surface != VK_NULL_HANDLE)
     {
         vkDestroySurfaceKHR(instance, surface, nullptr);
@@ -64,6 +72,7 @@ bool BackendVKModule::CleanUp()
         vkDestroyInstance(instance, nullptr);
         instance = VK_NULL_HANDLE;
     }
+
 
     return true;
 }
@@ -180,6 +189,44 @@ bool BackendVKModule::IsDeviceSuitable(VkPhysicalDevice device) const
 {
     QueueFamilyIndices indices = FindQueueFamilies(device);
     return indices.IsComplete();
+}
+
+void BackendVKModule::CreateLogicalDevice()
+{
+    std::set<uint32_t> uniqueQueueFamilies = {
+        queueFamilies.graphicsFamily.value(),
+        queueFamilies.presentFamily.value()
+    };
+
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+    float queuePriority = 1.0f;
+
+    for (uint32_t queueFamily : uniqueQueueFamilies)
+    {
+        VkDeviceQueueCreateInfo queueCreateInfo{};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = queueFamily;
+        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
+
+        queueCreateInfos.push_back(queueCreateInfo);
+    }
+
+    VkPhysicalDeviceFeatures deviceFeatures{};
+
+    VkDeviceCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+    createInfo.pQueueCreateInfos = queueCreateInfos.data();
+    createInfo.pEnabledFeatures = &deviceFeatures;
+
+    if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create Vulkan logical device.");
+    }
+
+    vkGetDeviceQueue(device, queueFamilies.graphicsFamily.value(), 0, &graphicsQueue);
+    vkGetDeviceQueue(device, queueFamilies.presentFamily.value(), 0, &presentQueue);
 }
 
 std::vector<const char*> BackendVKModule::GetRequiredExtensions() const
