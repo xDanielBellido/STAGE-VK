@@ -28,6 +28,7 @@
 #include "../Core/Module.h"
 
 #include <vulkan/vulkan.h>
+
 #include <vector>
 #include <optional>
 
@@ -35,6 +36,13 @@ struct GLFWwindow;
 
 struct QueueFamilyIndices
 {
+    /*
+    Stores the queue family indices required by the engine.
+
+    Graphics and presentation may be supported by the same queue family
+    or by two different families depending on the selected GPU.
+    */
+
     std::optional<uint32_t> graphicsFamily;
     std::optional<uint32_t> presentFamily;
 
@@ -52,7 +60,6 @@ public:
     bool Init() override;
     void PreRender() override;
     void PostRender() override;
-
     void OnResize(int width, int height) override;
     bool CleanUp() override;
 
@@ -65,35 +72,45 @@ public:
     VkQueue GetPresentQueue() const { return presentQueue; }
 
 private:
-    // Vulkan Initialization
+
+    // Instance
     void CreateInstance();
-    void CreateSurface(GLFWwindow* window);
-
-    void PickPhysicalDevice();
-    bool IsDeviceSuitable(VkPhysicalDevice device) const;
-    void CreateLogicalDevice();
-
     std::vector<const char*> GetRequiredExtensions() const;
     bool CheckValidationLayerSupport() const;
 
+    // Debug
     void CreateDebugMessenger();
     void DestroyDebugMessenger();
-
     static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void* userData);
 
+    // Surface
+    void CreateSurface(GLFWwindow* window);
+
+    // Physical Device
+    void PickPhysicalDevice();
+    bool IsDeviceSuitable(VkPhysicalDevice device) const;
     QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device) const;
 
+    // Logical Device
+    void CreateLogicalDevice();
+
 private:
-    // Core Vulkan Objects
+
+    // Instance
     VkInstance instance = VK_NULL_HANDLE;
-    VkSurfaceKHR surface = VK_NULL_HANDLE;
+
+    // Debug
     VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
+
+    // Surface
+    VkSurfaceKHR surface = VK_NULL_HANDLE;
+
+    // Physical Device
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    QueueFamilyIndices queueFamilies;
+
+    // Logical Device
     VkDevice device = VK_NULL_HANDLE;
     VkQueue graphicsQueue = VK_NULL_HANDLE;
     VkQueue presentQueue = VK_NULL_HANDLE;
-
-    QueueFamilyIndices queueFamilies;
-
-
 };
