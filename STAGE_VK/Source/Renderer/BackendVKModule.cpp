@@ -26,6 +26,7 @@ bool BackendVKModule::Init()
     CreateInstance();
     CreateDebugMessenger();
     CreateSurface(app->GetWindow().GetNativeHandle());
+    PickPhysicalDevice();
 
     return true;
 }
@@ -138,6 +139,51 @@ void BackendVKModule::CreateSurface(GLFWwindow* window)
     {
         throw std::runtime_error("Failed to create Vulkan window surface.");
     }
+}
+
+void BackendVKModule::PickPhysicalDevice()
+{
+    uint32_t deviceCount = 0;
+    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+    if (deviceCount == 0)
+    {
+        throw std::runtime_error("Failed to find a GPU with Vulkan support.");
+    }
+
+    std::vector<VkPhysicalDevice> devices(deviceCount);
+    vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+    for (const VkPhysicalDevice& device : devices)
+    {
+        if (IsDeviceSuitable(device))
+        {
+            physicalDevice = device;
+            break;
+        }
+    }
+
+    if (physicalDevice == VK_NULL_HANDLE)
+    {
+        throw std::runtime_error("Failed to find a suitable Vulkan GPU.");
+    }
+
+
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+
+    std::cout << "[Vulkan] Selected GPU: " << properties.deviceName << '\n';
+}
+
+bool BackendVKModule::IsDeviceSuitable(VkPhysicalDevice device) const
+{
+    VkPhysicalDeviceProperties properties{};
+    VkPhysicalDeviceFeatures features{};
+
+    vkGetPhysicalDeviceProperties(device, &properties);
+    vkGetPhysicalDeviceFeatures(device, &features);
+
+    return true;
 }
 
 std::vector<const char*> BackendVKModule::GetRequiredExtensions() const

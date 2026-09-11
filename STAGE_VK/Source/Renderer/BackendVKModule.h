@@ -47,11 +47,15 @@ public:
     // Vulkan Handles Access
     VkInstance GetInstance() const { return instance; }
     VkSurfaceKHR GetSurface() const { return surface; }
+    VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
 
 private:
     // Vulkan Initialization
     void CreateInstance();
     void CreateSurface(GLFWwindow* window);
+
+    void PickPhysicalDevice();
+    bool IsDeviceSuitable(VkPhysicalDevice device) const;
 
     std::vector<const char*> GetRequiredExtensions() const;
     bool CheckValidationLayerSupport() const;
@@ -66,4 +70,5 @@ private:
     VkInstance instance = VK_NULL_HANDLE;
     VkSurfaceKHR surface = VK_NULL_HANDLE;
     VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 };
