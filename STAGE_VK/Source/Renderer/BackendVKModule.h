@@ -52,10 +52,18 @@ private:
     // Vulkan Initialization
     void CreateInstance();
     void CreateSurface(GLFWwindow* window);
+
     std::vector<const char*> GetRequiredExtensions() const;
+    bool CheckValidationLayerSupport() const;
+
+    void CreateDebugMessenger();
+    void DestroyDebugMessenger();
+
+    static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void* userData);
 
 private:
     // Core Vulkan Objects
     VkInstance instance = VK_NULL_HANDLE;
     VkSurfaceKHR surface = VK_NULL_HANDLE;
+    VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
 };
