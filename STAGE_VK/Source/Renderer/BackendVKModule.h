@@ -29,8 +29,20 @@
 
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <optional>
 
 struct GLFWwindow;
+
+struct QueueFamilyIndices
+{
+    std::optional<uint32_t> graphicsFamily;
+    std::optional<uint32_t> presentFamily;
+
+    bool IsComplete() const
+    {
+        return graphicsFamily.has_value() && presentFamily.has_value();
+    }
+};
 
 class BackendVKModule : public Module
 {
@@ -65,10 +77,14 @@ private:
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void* userData);
 
+    QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device) const;
+
 private:
     // Core Vulkan Objects
     VkInstance instance = VK_NULL_HANDLE;
     VkSurfaceKHR surface = VK_NULL_HANDLE;
     VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+
+    QueueFamilyIndices queueFamilies;
 };

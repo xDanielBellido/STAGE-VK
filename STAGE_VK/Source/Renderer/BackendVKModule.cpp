@@ -168,6 +168,7 @@ void BackendVKModule::PickPhysicalDevice()
         throw std::runtime_error("Failed to find a suitable Vulkan GPU.");
     }
 
+    queueFamilies = FindQueueFamilies(physicalDevice);
 
     VkPhysicalDeviceProperties properties{};
     vkGetPhysicalDeviceProperties(physicalDevice, &properties);
@@ -177,13 +178,8 @@ void BackendVKModule::PickPhysicalDevice()
 
 bool BackendVKModule::IsDeviceSuitable(VkPhysicalDevice device) const
 {
-    VkPhysicalDeviceProperties properties{};
-    VkPhysicalDeviceFeatures features{};
-
-    vkGetPhysicalDeviceProperties(device, &properties);
-    vkGetPhysicalDeviceFeatures(device, &features);
-
-    return true;
+    QueueFamilyIndices indices = FindQueueFamilies(device);
+    return indices.IsComplete();
 }
 
 std::vector<const char*> BackendVKModule::GetRequiredExtensions() const
@@ -277,4 +273,38 @@ VKAPI_ATTR VkBool32 VKAPI_CALL BackendVKModule::DebugCallback(VkDebugUtilsMessag
 {
     std::cerr << "[Vulkan Validation] " << callbackData->pMessage << '\n';
     return VK_FALSE;
+}
+
+QueueFamilyIndices BackendVKModule::FindQueueFamilies(VkPhysicalDevice device) const
+{
+    QueueFamilyIndices indices;
+
+    uint32_t queueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+    std::vector<VkQueueFamilyProperties> queueFamiliesProperties(queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamiliesProperties.data());
+
+    for (uint32_t i = 0; i < queueFamilyCount; ++i)
+    {
+        if (queueFamiliesProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        {
+            indices.graphicsFamily = i;
+        }
+
+        VkBool32 presentSupport = VK_FALSE;
+        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+
+        if (presentSupport)
+        {
+            indices.presentFamily = i;
+        }
+
+        if (indices.IsComplete())
+        {
+            break;
+        }
+    }
+
+    return indices;
 }
