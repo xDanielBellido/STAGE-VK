@@ -135,18 +135,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Source\Renderer\BackendVKModule.cpp" />
-    <ClCompile Include="Source\Core\Application.cpp" />
+    <ClCompile Include="Source\Application.cpp" />
     <ClCompile Include="Source\main.cpp" />
-    <ClCompile Include="Source\Platform\Window.cpp" />
+    <ClCompile Include="Source\VulkanModule.cpp" />
+    <ClCompile Include="Source\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Source\Core\Globals.h" />
-    <ClInclude Include="Source\Renderer\BackendVKModule.h" />
-    <ClInclude Include="Source\Core\Application.h" />
-    <ClInclude Include="Source\Core\AppConfig.h" />
-    <ClInclude Include="Source\Core\Module.h" />
-    <ClInclude Include="Source\Platform\Window.h" />
+    <ClInclude Include="Source\AppConfig.h" />
+    <ClInclude Include="Source\Application.h" />
+    <ClInclude Include="Source\Globals.h" />
+    <ClInclude Include="Source\Module.h" />
+    <ClInclude Include="Source\VulkanModule.h" />
+    <ClInclude Include="Source\Window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

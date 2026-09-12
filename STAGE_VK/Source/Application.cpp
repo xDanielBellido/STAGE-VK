@@ -2,8 +2,8 @@
 #include "Application.h"
 
 #include "Module.h"
-#include "../Platform/Window.h"
-#include "../Renderer/BackendVKModule.h"
+#include "Window.h"
+#include "VulkanModule.h"
 
 #include <stdexcept>
 
@@ -11,7 +11,7 @@ Application::Application(const AppConfig& config) : config(config)
 {
     app = this;
 
-    modules.push_back(backendVK = new BackendVKModule());
+    modules.push_back(backendVK = new VulkanModule());
 }
 
 Application::~Application()

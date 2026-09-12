@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "../Core/Module.h"
+#include "Module.h"
 
 #include <vulkan/vulkan.h>
 
@@ -52,7 +52,7 @@ struct QueueFamilyIndices
     }
 };
 
-class BackendVKModule : public Module
+class VulkanModule : public Module
 {
 public:
 

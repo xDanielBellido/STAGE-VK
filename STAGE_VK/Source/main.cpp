@@ -1,6 +1,6 @@
 #include <iostream>
-#include "Core/AppConfig.h"
-#include "Core/Application.h"
+#include "AppConfig.h"
+#include "Application.h"
 
 int main()
 {

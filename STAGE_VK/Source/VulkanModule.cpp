@@ -1,8 +1,8 @@
-#include "../Core/Globals.h"
-#include "BackendVKModule.h"
+#include "Globals.h"
+#include "VulkanModule.h"
 
-#include "../Core/Application.h"
-#include "../Platform/Window.h"
+#include "Application.h"
+#include "Window.h"
 
 #include <GLFW/glfw3.h>
 
@@ -25,7 +25,7 @@ namespace
 // ============================================================================
 // Module Lifetime
 // ============================================================================
-bool BackendVKModule::Init()
+bool VulkanModule::Init()
 {
     CreateInstance();
     CreateDebugMessenger();
@@ -36,15 +36,15 @@ bool BackendVKModule::Init()
     return true;
 }
 
-void BackendVKModule::PreRender()
+void VulkanModule::PreRender()
 {
 }
 
-void BackendVKModule::PostRender()
+void VulkanModule::PostRender()
 {
 }
 
-void BackendVKModule::OnResize(int width, int height)
+void VulkanModule::OnResize(int width, int height)
 {
     // De momento no hacemos nada aquí.
     // Cuando exista la swapchain, aquí o en el renderer
@@ -53,7 +53,7 @@ void BackendVKModule::OnResize(int width, int height)
     (void)height;
 }
 
-bool BackendVKModule::CleanUp()
+bool VulkanModule::CleanUp()
 {
 
     if (device != VK_NULL_HANDLE)
@@ -83,7 +83,7 @@ bool BackendVKModule::CleanUp()
 // ============================================================================
 // Instance
 // ============================================================================
-void BackendVKModule::CreateInstance()
+void VulkanModule::CreateInstance()
 {
     // Creates the main Vulkan instance used by the engine.
     // It first checks that Vulkan is supported and that the requested validation
@@ -148,7 +148,7 @@ void BackendVKModule::CreateInstance()
     }
 }
 
-std::vector<const char*> BackendVKModule::GetRequiredExtensions() const
+std::vector<const char*> VulkanModule::GetRequiredExtensions() const
 {
     // 1. Ask GLFW how many Vulkan instance extensions are required 
     // for the current windowing system.
@@ -176,7 +176,7 @@ std::vector<const char*> BackendVKModule::GetRequiredExtensions() const
     return extensions;
 }
 
-bool BackendVKModule::CheckValidationLayerSupport() const
+bool VulkanModule::CheckValidationLayerSupport() const
 {
     // 1. Ask Vulkan how many instance layers are available on the system
     uint32_t layerCount = 0;
@@ -215,7 +215,7 @@ bool BackendVKModule::CheckValidationLayerSupport() const
 // ============================================================================
 // Debug
 // ============================================================================
-void BackendVKModule::CreateDebugMessenger()
+void VulkanModule::CreateDebugMessenger()
 {
     if (!enableValidationLayers)
     {
@@ -236,7 +236,7 @@ void BackendVKModule::CreateDebugMessenger()
     }
 }
 
-void BackendVKModule::DestroyDebugMessenger()
+void VulkanModule::DestroyDebugMessenger()
 {
     if (debugMessenger == VK_NULL_HANDLE)
     {
@@ -252,7 +252,7 @@ void BackendVKModule::DestroyDebugMessenger()
     }
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL BackendVKModule::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void* userData)
+VKAPI_ATTR VkBool32 VKAPI_CALL VulkanModule::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void* userData)
 {
     std::cerr << "[Vulkan Validation] " << callbackData->pMessage << '\n';
     return VK_FALSE;
@@ -261,7 +261,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL BackendVKModule::DebugCallback(VkDebugUtilsMessag
 // ============================================================================
 // Surface
 // ============================================================================
-void BackendVKModule::CreateSurface(GLFWwindow* window)
+void VulkanModule::CreateSurface(GLFWwindow* window)
 {
     if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS)
     {
@@ -272,7 +272,7 @@ void BackendVKModule::CreateSurface(GLFWwindow* window)
 // ============================================================================
 // Physical Device
 // ============================================================================
-void BackendVKModule::PickPhysicalDevice()
+void VulkanModule::PickPhysicalDevice()
 {
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
@@ -307,13 +307,13 @@ void BackendVKModule::PickPhysicalDevice()
     std::cout << "[Vulkan] Selected GPU: " << properties.deviceName << '\n';
 }
 
-bool BackendVKModule::IsDeviceSuitable(VkPhysicalDevice device) const
+bool VulkanModule::IsDeviceSuitable(VkPhysicalDevice device) const
 {
     QueueFamilyIndices indices = FindQueueFamilies(device);
     return indices.IsComplete();
 }
 
-QueueFamilyIndices BackendVKModule::FindQueueFamilies(VkPhysicalDevice device) const
+QueueFamilyIndices VulkanModule::FindQueueFamilies(VkPhysicalDevice device) const
 {
     // A queue family is a group of GPU queues that support a specific set of operations,
     // such as graphics, compute, transfer, or presentation.
@@ -370,7 +370,7 @@ QueueFamilyIndices BackendVKModule::FindQueueFamilies(VkPhysicalDevice device) c
 // ============================================================================
 // Logical Device
 // ============================================================================
-void BackendVKModule::CreateLogicalDevice()
+void VulkanModule::CreateLogicalDevice()
 {
     // A logical device (VkDevice) is the interface that the engine uses to
     // communicate with the selected physical GPU.
