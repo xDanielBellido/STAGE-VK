@@ -26,9 +26,11 @@
 #pragma once
 
 #include "Module.h"
-#include "VulkanDevice.h"
 
 #include <vulkan/vulkan.h>
+
+#include "VulkanDevice.h"
+#include "VulkanSwapchain.h"
 
 #include <vector>
 
@@ -82,4 +84,5 @@ private:
     VkSurfaceKHR surface = VK_NULL_HANDLE;
 
     VulkanDevice vulkanDevice;
+    VulkanSwapchain vulkanSwapchain;
 };

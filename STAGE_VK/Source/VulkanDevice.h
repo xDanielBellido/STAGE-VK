@@ -58,6 +58,9 @@ private:
     // Logical Device
     void CreateLogicalDevice();
 
+    bool CheckDeviceExtensionSupport(VkPhysicalDevice device) const;
+    bool HasAdequateSwapchainSupport(VkPhysicalDevice device) const;
+
 private:
     // Non-owned handles provided by VulkanModule
     VkInstance instance = VK_NULL_HANDLE;

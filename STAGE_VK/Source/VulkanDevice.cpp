@@ -4,6 +4,12 @@
 #include <set>
 #include <stdexcept>
 #include <vector>
+#include <string>
+
+namespace
+{
+    const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+}
 
 bool VulkanDevice::Init(VkInstance instance, VkSurfaceKHR surface)
 {
@@ -74,7 +80,10 @@ void VulkanDevice::PickPhysicalDevice()
 bool VulkanDevice::IsDeviceSuitable(VkPhysicalDevice device) const
 {
     QueueFamilyIndices indices = FindQueueFamilies(device);
-    return indices.IsComplete();
+    bool extensionsSupported = CheckDeviceExtensionSupport(device);
+    bool swapchainAdequate = extensionsSupported && HasAdequateSwapchainSupport(device);
+
+    return indices.IsComplete() && extensionsSupported && swapchainAdequate;
 }
 
 QueueFamilyIndices VulkanDevice::FindQueueFamilies(VkPhysicalDevice device) const
@@ -179,6 +188,8 @@ void VulkanDevice::CreateLogicalDevice()
     createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
     createInfo.pEnabledFeatures = &deviceFeatures;
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+    createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
     // 5. Create the logical device from the selected physical GPU.
     if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
@@ -190,4 +201,33 @@ void VulkanDevice::CreateLogicalDevice()
     // Queue index 0 is used because we requested one queue from each family.
     vkGetDeviceQueue(device, queueFamilies.graphicsFamily.value(), 0, &graphicsQueue);
     vkGetDeviceQueue(device, queueFamilies.presentFamily.value(), 0, &presentQueue);
+}
+
+bool VulkanDevice::CheckDeviceExtensionSupport(VkPhysicalDevice device) const
+{
+    uint32_t extensionCount = 0;
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+    std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+    std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+
+    for (const auto& extension : availableExtensions)
+    {
+        requiredExtensions.erase(extension.extensionName);
+    }
+
+    return requiredExtensions.empty();
+}
+
+bool VulkanDevice::HasAdequateSwapchainSupport(VkPhysicalDevice device) const
+{
+    uint32_t formatCount = 0;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
+
+    uint32_t presentModeCount = 0;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
+
+    return formatCount > 0 && presentModeCount > 0;
 }

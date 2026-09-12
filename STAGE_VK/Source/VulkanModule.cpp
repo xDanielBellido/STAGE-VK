@@ -35,6 +35,15 @@ bool VulkanModule::Init()
         return false;
     }
 
+    int width = 0;
+    int height = 0;
+    app->GetWindow().GetFramebufferSize(width, height);
+
+    if (!vulkanSwapchain.Init(vulkanDevice.GetPhysicalDevice(), vulkanDevice.GetDevice(), surface, vulkanDevice.GetQueueFamilies(), static_cast<uint32_t>(width), static_cast<uint32_t>(height)))
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -57,6 +66,7 @@ void VulkanModule::OnResize(int width, int height)
 
 bool VulkanModule::CleanUp()
 {
+    vulkanSwapchain.CleanUp();
     vulkanDevice.CleanUp();
 
     if (surface != VK_NULL_HANDLE)
