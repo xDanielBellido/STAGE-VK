@@ -11,38 +11,41 @@
     <Filter Include="Source\Modules">
       <UniqueIdentifier>{55609246-eef6-4cdf-935a-79c79dcfa9f0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Core\Application">
+      <UniqueIdentifier>{b8479b56-504d-451d-b1bf-83af1e840387}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Core\MainWindow">
+      <UniqueIdentifier>{7b1f1752-e816-4cff-96ac-83eaacab83ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Core\VulkanCore">
+      <UniqueIdentifier>{07ce190e-70a1-435f-9fb3-292588f06ee2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source\Application.cpp">
-      <Filter>Source\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Window.cpp">
-      <Filter>Source\Core</Filter>
-    </ClCompile>
     <ClCompile Include="Source\main.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>
     <ClCompile Include="Source\VulkanModule.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Application.cpp">
+      <Filter>Source\Core\Application</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Window.cpp">
+      <Filter>Source\Core\MainWindow</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\VulkanCommandContext.cpp">
+      <Filter>Source\Core\VulkanCore</Filter>
+    </ClCompile>
     <ClCompile Include="Source\VulkanDevice.cpp">
-      <Filter>Source\Modules</Filter>
+      <Filter>Source\Core\VulkanCore</Filter>
     </ClCompile>
     <ClCompile Include="Source\VulkanSwapchain.cpp">
-      <Filter>Source\Modules</Filter>
+      <Filter>Source\Core\VulkanCore</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Source\AppConfig.h">
-      <Filter>Source\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Application.h">
-      <Filter>Source\Core</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Globals.h">
-      <Filter>Source\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Window.h">
       <Filter>Source\Core</Filter>
     </ClInclude>
     <ClInclude Include="Source\Module.h">
@@ -51,11 +54,23 @@
     <ClInclude Include="Source\VulkanModule.h">
       <Filter>Source\Modules</Filter>
     </ClInclude>
+    <ClInclude Include="Source\AppConfig.h">
+      <Filter>Source\Core\Application</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application.h">
+      <Filter>Source\Core\Application</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Window.h">
+      <Filter>Source\Core\MainWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\VulkanCommandContext.h">
+      <Filter>Source\Core\VulkanCore</Filter>
+    </ClInclude>
     <ClInclude Include="Source\VulkanDevice.h">
-      <Filter>Source\Modules</Filter>
+      <Filter>Source\Core\VulkanCore</Filter>
     </ClInclude>
     <ClInclude Include="Source\VulkanSwapchain.h">
-      <Filter>Source\Modules</Filter>
+      <Filter>Source\Core\VulkanCore</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

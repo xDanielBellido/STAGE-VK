@@ -44,6 +44,11 @@ bool VulkanModule::Init()
         return false;
     }
 
+    if (!commandContext.Init(vulkanDevice.GetDevice(), vulkanDevice.GetQueueFamilies().graphicsFamily.value()))
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -66,6 +71,7 @@ void VulkanModule::OnResize(int width, int height)
 
 bool VulkanModule::CleanUp()
 {
+    commandContext.CleanUp();
     vulkanSwapchain.CleanUp();
     vulkanDevice.CleanUp();
 
