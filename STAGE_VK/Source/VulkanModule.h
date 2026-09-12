@@ -77,6 +77,8 @@ private:
     // Frame Recording
     void RecordClearCommands(uint32_t imageIndex);
 
+    void RecreateSwapchain();
+
 private:
 
     // Instance
@@ -95,4 +97,5 @@ private:
 
     uint32_t currentImageIndex = 0;
     bool frameReady = false;
+    bool swapchainNeedsRecreation = false;
 };

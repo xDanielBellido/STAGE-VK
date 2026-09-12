@@ -59,6 +59,16 @@ bool VulkanModule::Init()
 
 void VulkanModule::PreRender()
 {
+    if (swapchainNeedsRecreation)
+    {
+        RecreateSwapchain();
+
+        if (swapchainNeedsRecreation)
+        {
+            return;
+        }
+    }
+
     VkDevice device = vulkanDevice.GetDevice();
     VkFence inFlightFence = frameContext.GetInFlightFence();
 
@@ -70,8 +80,18 @@ void VulkanModule::PreRender()
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR)
     {
+        swapchainNeedsRecreation = true;
         frameReady = false;
         return;
+    }
+
+    if (result == VK_SUBOPTIMAL_KHR)
+    {
+        swapchainNeedsRecreation = true;
+    }
+    else if (result != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to acquire Vulkan swapchain image.");
     }
 
     if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
@@ -140,7 +160,11 @@ void VulkanModule::PostRender()
 
     VkResult result = vkQueuePresentKHR(vulkanDevice.GetPresentQueue(), &presentInfo);
 
-    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR && result != VK_ERROR_OUT_OF_DATE_KHR)
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+    {
+        swapchainNeedsRecreation = true;
+    }
+    else if (result != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to present Vulkan swapchain image.");
     }
@@ -150,11 +174,47 @@ void VulkanModule::PostRender()
 
 void VulkanModule::OnResize(int width, int height)
 {
-    // De momento no hacemos nada aquí.
-    // Cuando exista la swapchain, aquí o en el renderer
-    // se recrearán los recursos dependientes del tamaño.
-    (void)width;
-    (void)height;
+    if (width > 0 && height > 0)
+    {
+        swapchainNeedsRecreation = true;
+    }
+}
+
+void VulkanModule::RecreateSwapchain()
+{
+    int width = 0;
+    int height = 0;
+    app->GetWindow().GetFramebufferSize(width, height);
+
+    // A minimized window may temporarily have a framebuffer size of 0x0.
+    // In that case there is nothing valid to recreate yet.
+    if (width == 0 || height == 0)
+    {
+        return;
+    }
+
+    // 1. Make sure the GPU is no longer using swapchain-dependent resources.
+    vulkanDevice.WaitIdle();
+
+    // 2. Destroy resources that depend on the current swapchain.
+    frameContext.CleanUp();
+    vulkanSwapchain.CleanUp();
+
+    // 3. Create the swapchain again using the new framebuffer size.
+    if (!vulkanSwapchain.Init(vulkanDevice.GetPhysicalDevice(), vulkanDevice.GetDevice(), surface, vulkanDevice.GetQueueFamilies(), static_cast<uint32_t>(width), static_cast<uint32_t>(height)))
+    {
+        throw std::runtime_error("Failed to recreate Vulkan swapchain.");
+    }
+
+    // 4. Recreate synchronization objects that depend on the swapchain image count.
+    if (!frameContext.Init(vulkanDevice.GetDevice(), vulkanSwapchain.GetImageCount()))
+    {
+        throw std::runtime_error("Failed to recreate Vulkan frame synchronization.");
+    }
+
+    currentImageIndex = 0;
+    frameReady = false;
+    swapchainNeedsRecreation = false;
 }
 
 bool VulkanModule::CleanUp()
