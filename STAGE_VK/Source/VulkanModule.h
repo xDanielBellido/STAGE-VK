@@ -1,6 +1,6 @@
 /*
     ===========================================================================
-    BackendVKModule
+    VulkanModule
     ===========================================================================
 
     This module represents the Vulkan backend layer of the engine.

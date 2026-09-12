@@ -11,7 +11,7 @@ Application::Application(const AppConfig& config) : config(config)
 {
     app = this;
 
-    modules.push_back(backendVK = new VulkanModule());
+    modules.push_back(vulkanModule = new VulkanModule());
 }
 
 Application::~Application()
@@ -111,7 +111,7 @@ bool Application::CleanUp()
         ret = (*it)->CleanUp();
     }
 
-    backendVK = nullptr;
+    vulkanModule = nullptr;
     window.reset();
 
     return ret;

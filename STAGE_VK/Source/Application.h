@@ -41,7 +41,7 @@ private:
     std::unique_ptr<Window> window;
     std::vector<Module*> modules;
 
-    VulkanModule* backendVK = nullptr;
+    VulkanModule* vulkanModule = nullptr;
 
     bool paused = false;
 
@@ -64,8 +64,8 @@ public:
     Window&                 GetWindow() { return *window; }
     const Window&           GetWindow() const { return *window; }
 
-    VulkanModule&        GetBackendVK() { return *backendVK; }
-    const VulkanModule&  GetBackendVK() const { return *backendVK; }
+    VulkanModule&        GetBackendVK() { return *vulkanModule; }
+    const VulkanModule&  GetBackendVK() const { return *vulkanModule; }
 
                             // Frame Info
     float                   GetDeltaTime() const { return deltaTime; }
