@@ -25,6 +25,9 @@
     <ClCompile Include="Source\VulkanModule.cpp">
       <Filter>Source\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Source\VulkanDevice.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\AppConfig.h">
@@ -43,6 +46,9 @@
       <Filter>Source\Modules</Filter>
     </ClInclude>
     <ClInclude Include="Source\VulkanModule.h">
+      <Filter>Source\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\VulkanDevice.h">
       <Filter>Source\Modules</Filter>
     </ClInclude>
   </ItemGroup>

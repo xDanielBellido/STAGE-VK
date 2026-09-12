@@ -137,6 +137,7 @@
   <ItemGroup>
     <ClCompile Include="Source\Application.cpp" />
     <ClCompile Include="Source\main.cpp" />
+    <ClCompile Include="Source\VulkanDevice.cpp" />
     <ClCompile Include="Source\VulkanModule.cpp" />
     <ClCompile Include="Source\Window.cpp" />
   </ItemGroup>
@@ -145,6 +146,7 @@
     <ClInclude Include="Source\Application.h" />
     <ClInclude Include="Source\Globals.h" />
     <ClInclude Include="Source\Module.h" />
+    <ClInclude Include="Source\VulkanDevice.h" />
     <ClInclude Include="Source\VulkanModule.h" />
     <ClInclude Include="Source\Window.h" />
   </ItemGroup>

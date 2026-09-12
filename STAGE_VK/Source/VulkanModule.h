@@ -26,31 +26,13 @@
 #pragma once
 
 #include "Module.h"
+#include "VulkanDevice.h"
 
 #include <vulkan/vulkan.h>
 
 #include <vector>
-#include <optional>
 
 struct GLFWwindow;
-
-struct QueueFamilyIndices
-{
-    /*
-    Stores the queue family indices required by the engine.
-
-    Graphics and presentation may be supported by the same queue family
-    or by two different families depending on the selected GPU.
-    */
-
-    std::optional<uint32_t> graphicsFamily;
-    std::optional<uint32_t> presentFamily;
-
-    bool IsComplete() const
-    {
-        return graphicsFamily.has_value() && presentFamily.has_value();
-    }
-};
 
 class VulkanModule : public Module
 {
@@ -66,10 +48,12 @@ public:
     // Vulkan Handles Access
     VkInstance GetInstance() const { return instance; }
     VkSurfaceKHR GetSurface() const { return surface; }
-    VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
-    VkDevice GetDevice() const { return device; }
-    VkQueue GetGraphicsQueue() const { return graphicsQueue; }
-    VkQueue GetPresentQueue() const { return presentQueue; }
+
+
+    VkPhysicalDevice GetPhysicalDevice() const { return vulkanDevice.GetPhysicalDevice(); }
+    VkDevice GetDevice() const { return vulkanDevice.GetDevice(); }
+    VkQueue GetGraphicsQueue() const { return vulkanDevice.GetGraphicsQueue(); }
+    VkQueue GetPresentQueue() const { return vulkanDevice.GetPresentQueue(); }
 
 private:
 
@@ -86,14 +70,6 @@ private:
     // Surface
     void CreateSurface(GLFWwindow* window);
 
-    // Physical Device
-    void PickPhysicalDevice();
-    bool IsDeviceSuitable(VkPhysicalDevice device) const;
-    QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device) const;
-
-    // Logical Device
-    void CreateLogicalDevice();
-
 private:
 
     // Instance
@@ -105,12 +81,5 @@ private:
     // Surface
     VkSurfaceKHR surface = VK_NULL_HANDLE;
 
-    // Physical Device
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-    QueueFamilyIndices queueFamilies;
-
-    // Logical Device
-    VkDevice device = VK_NULL_HANDLE;
-    VkQueue graphicsQueue = VK_NULL_HANDLE;
-    VkQueue presentQueue = VK_NULL_HANDLE;
+    VulkanDevice vulkanDevice;
 };
