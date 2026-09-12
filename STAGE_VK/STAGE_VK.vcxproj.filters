@@ -43,6 +43,9 @@
     <ClCompile Include="Source\VulkanSwapchain.cpp">
       <Filter>Source\Core\VulkanCore</Filter>
     </ClCompile>
+    <ClCompile Include="Source\FrameContext.cpp">
+      <Filter>Source\Core\VulkanCore</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Globals.h">
@@ -70,6 +73,9 @@
       <Filter>Source\Core\VulkanCore</Filter>
     </ClInclude>
     <ClInclude Include="Source\VulkanSwapchain.h">
+      <Filter>Source\Core\VulkanCore</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\FrameContext.h">
       <Filter>Source\Core\VulkanCore</Filter>
     </ClInclude>
   </ItemGroup>

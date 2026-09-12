@@ -30,7 +30,7 @@ bool VulkanSwapchain::Init(VkPhysicalDevice physicalDevice, VkDevice device, VkS
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
     createInfo.imageExtent = swapchainExtent;
     createInfo.imageArrayLayers = 1;
-    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
     uint32_t queueFamilyIndices[] = { queueFamilies.graphicsFamily.value(), queueFamilies.presentFamily.value() };
 

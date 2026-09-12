@@ -49,6 +49,11 @@ bool VulkanModule::Init()
         return false;
     }
 
+    if (!frameContext.Init(vulkanDevice.GetDevice()))
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -71,6 +76,7 @@ void VulkanModule::OnResize(int width, int height)
 
 bool VulkanModule::CleanUp()
 {
+    frameContext.CleanUp();
     commandContext.CleanUp();
     vulkanSwapchain.CleanUp();
     vulkanDevice.CleanUp();

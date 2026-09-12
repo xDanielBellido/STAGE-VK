@@ -32,6 +32,7 @@
 #include "VulkanDevice.h"
 #include "VulkanSwapchain.h"
 #include "VulkanCommandContext.h"
+#include "FrameContext.h"
 
 #include <vector>
 
@@ -87,4 +88,5 @@ private:
     VulkanDevice vulkanDevice;
     VulkanSwapchain vulkanSwapchain;
     VulkanCommandContext commandContext;
+    FrameContext frameContext;
 };
