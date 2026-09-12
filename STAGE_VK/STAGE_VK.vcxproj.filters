@@ -6,39 +6,44 @@
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
     <Filter Include="Source\Core">
-      <UniqueIdentifier>{962c6150-5a69-45e4-9d85-1e57411fcbd9}</UniqueIdentifier>
+      <UniqueIdentifier>{d142b37e-6c37-45bc-a3ae-6d613ce8ca2b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Platform">
-      <UniqueIdentifier>{19000907-a279-4135-9e2e-9138702ca203}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Renderer">
-      <UniqueIdentifier>{88ab1793-1212-4974-801c-b3e29d41b57b}</UniqueIdentifier>
+    <Filter Include="Source\Modules">
+      <UniqueIdentifier>{55609246-eef6-4cdf-935a-79c79dcfa9f0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Application.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Window.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
     <ClCompile Include="Source\main.cpp">
-      <Filter>Source</Filter>
+      <Filter>Source\Core</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Platform\Window.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Core\Application.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Renderer\BackendVKModule.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="Source\VulkanModule.cpp">
+      <Filter>Source\Modules</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Source\Core\AppConfig.h">
+    <ClInclude Include="Source\AppConfig.h">
       <Filter>Source\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Core\Module.h">
+    <ClInclude Include="Source\Application.h">
       <Filter>Source\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Platform\Window.h" />
-    <ClInclude Include="Source\Core\Application.h" />
-    <ClInclude Include="Source\Renderer\BackendVKModule.h" />
-    <ClInclude Include="Source\Core\Globals.h" />
+    <ClInclude Include="Source\Globals.h">
+      <Filter>Source\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Window.h">
+      <Filter>Source\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Module.h">
+      <Filter>Source\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\VulkanModule.h">
+      <Filter>Source\Modules</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
