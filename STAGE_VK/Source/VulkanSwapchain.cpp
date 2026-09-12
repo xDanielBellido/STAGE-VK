@@ -59,11 +59,26 @@ bool VulkanSwapchain::Init(VkPhysicalDevice physicalDevice, VkDevice device, VkS
     imageFormat = surfaceFormat.format;
     extent = swapchainExtent;
 
+    GetSwapchainImages();
+    CreateImageViews();
+
     return true;
 }
 
 void VulkanSwapchain::CleanUp()
 {
+    for (VkImageView imageView : imageViews)
+    {
+        if (imageView != VK_NULL_HANDLE)
+        {
+            vkDestroyImageView(device, imageView, nullptr);
+        }
+    }
+
+    imageViews.clear();
+    images.clear();
+
+
     if (swapchain != VK_NULL_HANDLE)
     {
         vkDestroySwapchainKHR(device, swapchain, nullptr);
@@ -73,6 +88,7 @@ void VulkanSwapchain::CleanUp()
     physicalDevice = VK_NULL_HANDLE;
     device = VK_NULL_HANDLE;
     surface = VK_NULL_HANDLE;
+
     imageFormat = VK_FORMAT_UNDEFINED;
     extent = {};
 }
@@ -143,4 +159,57 @@ VkExtent2D VulkanSwapchain::ChooseExtent(const VkSurfaceCapabilitiesKHR& capabil
     actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
 
     return actualExtent;
+}
+
+void VulkanSwapchain::GetSwapchainImages()
+{
+    // The swapchain creates and owns its images.
+    // We only retrieve and store their handles so they can later be used
+    // as rendering destinations.
+
+    // 1. Ask Vulkan how many images were created for the swapchain.
+    uint32_t imageCount = 0;
+    vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
+
+    // 2. Allocate enough space to store all image handles.
+    images.resize(imageCount);
+
+    // 3. Retrieve the swapchain image handles.
+    vkGetSwapchainImagesKHR(device, swapchain, &imageCount, images.data());
+}
+
+void VulkanSwapchain::CreateImageViews()
+{
+    // A VkImage represents the actual image resource.
+    // A VkImageView describes how Vulkan should access and interpret that image.
+    //
+    // Each swapchain image needs an image view before it can later be used
+    // as a rendering attachment.
+
+    imageViews.resize(images.size());
+
+    for (size_t i = 0; i < images.size(); ++i)
+    {
+        VkImageViewCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        createInfo.image = images[i];
+        createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        createInfo.format = imageFormat;
+
+        createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+        createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        createInfo.subresourceRange.baseMipLevel = 0;
+        createInfo.subresourceRange.levelCount = 1;
+        createInfo.subresourceRange.baseArrayLayer = 0;
+        createInfo.subresourceRange.layerCount = 1;
+
+        if (vkCreateImageView(device, &createInfo, nullptr, &imageViews[i]) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create Vulkan swapchain image view.");
+        }
+    }
 }

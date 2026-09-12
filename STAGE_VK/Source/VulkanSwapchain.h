@@ -46,12 +46,18 @@ public:
     VkFormat GetImageFormat() const { return imageFormat; }
     VkExtent2D GetExtent() const { return extent; }
 
+    const std::vector<VkImage>& GetImages() const { return images; }
+    const std::vector<VkImageView>& GetImageViews() const { return imageViews; }
+
 private:
     SwapchainSupportDetails QuerySupport(VkPhysicalDevice physicalDevice) const;
 
     VkSurfaceFormatKHR ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& formats) const;
     VkPresentModeKHR ChoosePresentMode(const std::vector<VkPresentModeKHR>& presentModes) const;
     VkExtent2D ChooseExtent(const VkSurfaceCapabilitiesKHR& capabilities, uint32_t width, uint32_t height) const;
+
+    void GetSwapchainImages();
+    void CreateImageViews();
 
 private:
     // Non-owned handles
@@ -60,6 +66,9 @@ private:
     VkSurfaceKHR surface = VK_NULL_HANDLE;
 
     VkSwapchainKHR swapchain = VK_NULL_HANDLE;
+
+    std::vector<VkImage> images;
+    std::vector<VkImageView> imageViews;
 
     VkFormat imageFormat = VK_FORMAT_UNDEFINED;
     VkExtent2D extent{};
