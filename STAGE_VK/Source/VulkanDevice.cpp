@@ -26,6 +26,7 @@ void VulkanDevice::CleanUp()
 {
     if (device != VK_NULL_HANDLE)
     {
+        vkDeviceWaitIdle(device);
         vkDestroyDevice(device, nullptr);
         device = VK_NULL_HANDLE;
     }
@@ -37,6 +38,14 @@ void VulkanDevice::CleanUp()
 
     instance = VK_NULL_HANDLE;
     surface = VK_NULL_HANDLE;
+}
+
+void VulkanDevice::WaitIdle() const
+{
+    if (device != VK_NULL_HANDLE)
+    {
+        vkDeviceWaitIdle(device);
+    }
 }
 
 // ============================================================================

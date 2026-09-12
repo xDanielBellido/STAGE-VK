@@ -74,6 +74,9 @@ private:
     // Surface
     void CreateSurface(GLFWwindow* window);
 
+    // Frame Recording
+    void RecordClearCommands(uint32_t imageIndex);
+
 private:
 
     // Instance
@@ -89,4 +92,7 @@ private:
     VulkanSwapchain vulkanSwapchain;
     VulkanCommandContext commandContext;
     FrameContext frameContext;
+
+    uint32_t currentImageIndex = 0;
+    bool frameReady = false;
 };

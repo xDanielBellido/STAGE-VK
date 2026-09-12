@@ -41,6 +41,7 @@ class VulkanDevice
 public:
     bool Init(VkInstance instance, VkSurfaceKHR surface);
     void CleanUp();
+    void WaitIdle() const;
 
     // Vulkan Handles Access
     VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
@@ -48,6 +49,7 @@ public:
     VkQueue GetGraphicsQueue() const { return graphicsQueue; }
     VkQueue GetPresentQueue() const { return presentQueue; }
     const QueueFamilyIndices& GetQueueFamilies() const { return queueFamilies; }
+
 
 private:
     // Physical Device

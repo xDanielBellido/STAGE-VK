@@ -59,10 +59,93 @@ bool VulkanModule::Init()
 
 void VulkanModule::PreRender()
 {
+    VkDevice device = vulkanDevice.GetDevice();
+    VkFence inFlightFence = frameContext.GetInFlightFence();
+
+    // 1. Wait until the GPU has finished using the resources from the previous frame.
+    vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
+
+    // 2. Acquire the next available image from the swapchain.
+    VkResult result = vkAcquireNextImageKHR(device, vulkanSwapchain.GetSwapchain(), UINT64_MAX, frameContext.GetImageAvailableSemaphore(), VK_NULL_HANDLE, &currentImageIndex);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        frameReady = false;
+        return;
+    }
+
+    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+    {
+        throw std::runtime_error("Failed to acquire Vulkan swapchain image.");
+    }
+
+    // 3. The image was acquired successfully, so the fence can now be reused
+    // for the work that will be submitted for this frame.
+    vkResetFences(device, 1, &inFlightFence);
+
+    // 4. Reset the command buffer before recording the new frame.
+    VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer();
+
+    if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to reset Vulkan command buffer.");
+    }
+
+    // 5. Record the commands that clear the acquired swapchain image.
+    RecordClearCommands(currentImageIndex);
+
+    frameReady = true;
 }
 
 void VulkanModule::PostRender()
 {
+    if (!frameReady)
+    {
+        return;
+    }
+
+    VkSemaphore imageAvailableSemaphore = frameContext.GetImageAvailableSemaphore();
+    VkSemaphore renderFinishedSemaphore = frameContext.GetRenderFinishedSemaphore();
+    VkFence inFlightFence = frameContext.GetInFlightFence();
+    VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer();
+
+    // 1. Submit the recorded command buffer to the graphics queue.
+    VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = &imageAvailableSemaphore;
+    submitInfo.pWaitDstStageMask = &waitStage;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
+
+    if (vkQueueSubmit(vulkanDevice.GetGraphicsQueue(), 1, &submitInfo, inFlightFence) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to submit Vulkan command buffer.");
+    }
+
+    // 2. Present the rendered swapchain image.
+    VkSwapchainKHR swapchain = vulkanSwapchain.GetSwapchain();
+
+    VkPresentInfoKHR presentInfo{};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = &renderFinishedSemaphore;
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = &swapchain;
+    presentInfo.pImageIndices = &currentImageIndex;
+
+    VkResult result = vkQueuePresentKHR(vulkanDevice.GetPresentQueue(), &presentInfo);
+
+    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR && result != VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        throw std::runtime_error("Failed to present Vulkan swapchain image.");
+    }
+
+    frameReady = false;
 }
 
 void VulkanModule::OnResize(int width, int height)
@@ -76,6 +159,8 @@ void VulkanModule::OnResize(int width, int height)
 
 bool VulkanModule::CleanUp()
 {
+    vulkanDevice.WaitIdle();
+
     frameContext.CleanUp();
     commandContext.CleanUp();
     vulkanSwapchain.CleanUp();
@@ -285,6 +370,71 @@ void VulkanModule::CreateSurface(GLFWwindow* window)
     if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create Vulkan window surface.");
+    }
+}
+
+// ============================================================================
+// Frame Recording
+// ============================================================================
+void VulkanModule::RecordClearCommands(uint32_t imageIndex)
+{
+    VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer();
+    VkImage swapchainImage = vulkanSwapchain.GetImage(imageIndex);
+
+    // 1. Begin recording commands into the command buffer.
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to begin recording Vulkan command buffer.");
+    }
+
+    // The whole swapchain image will be affected by the following operations.
+    VkImageSubresourceRange subresourceRange{};
+    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subresourceRange.baseMipLevel = 0;
+    subresourceRange.levelCount = 1;
+    subresourceRange.baseArrayLayer = 0;
+    subresourceRange.layerCount = 1;
+
+    // 2. Transition the image so it can be used as the destination of a clear operation.
+    VkImageMemoryBarrier toTransferBarrier{};
+    toTransferBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    toTransferBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    toTransferBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    toTransferBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    toTransferBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    toTransferBarrier.image = swapchainImage;
+    toTransferBarrier.subresourceRange = subresourceRange;
+    toTransferBarrier.srcAccessMask = 0;
+    toTransferBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+    vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toTransferBarrier);
+
+    // 3. Clear the image to red.
+    VkClearColorValue clearColor = { { 1.0f, 0.0f, 0.0f, 1.0f } };
+
+    vkCmdClearColorImage(commandBuffer, swapchainImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &subresourceRange);
+
+    // 4. Transition the image into the layout required for presentation.
+    VkImageMemoryBarrier toPresentBarrier{};
+    toPresentBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    toPresentBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    toPresentBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    toPresentBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    toPresentBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    toPresentBarrier.image = swapchainImage;
+    toPresentBarrier.subresourceRange = subresourceRange;
+    toPresentBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    toPresentBarrier.dstAccessMask = 0;
+
+    vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &toPresentBarrier);
+
+    // 5. Finish command recording.
+    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to record Vulkan command buffer.");
     }
 }
 
