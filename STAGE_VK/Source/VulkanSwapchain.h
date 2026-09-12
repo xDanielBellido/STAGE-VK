@@ -45,6 +45,7 @@ public:
     VkSwapchainKHR GetSwapchain() const { return swapchain; }
     VkFormat GetImageFormat() const { return imageFormat; }
     VkImage GetImage(uint32_t index) const { return images[index]; }
+    uint32_t GetImageCount() const { return static_cast<uint32_t>(images.size()); }
     VkExtent2D GetExtent() const { return extent; }
 
     const std::vector<VkImage>& GetImages() const { return images; }

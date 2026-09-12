@@ -49,7 +49,7 @@ bool VulkanModule::Init()
         return false;
     }
 
-    if (!frameContext.Init(vulkanDevice.GetDevice()))
+    if (!frameContext.Init(vulkanDevice.GetDevice(), vulkanSwapchain.GetImageCount()))
     {
         return false;
     }
@@ -105,7 +105,7 @@ void VulkanModule::PostRender()
     }
 
     VkSemaphore imageAvailableSemaphore = frameContext.GetImageAvailableSemaphore();
-    VkSemaphore renderFinishedSemaphore = frameContext.GetRenderFinishedSemaphore();
+    VkSemaphore renderFinishedSemaphore = frameContext.GetRenderFinishedSemaphore(currentImageIndex);
     VkFence inFlightFence = frameContext.GetInFlightFence();
     VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer();
 
@@ -413,7 +413,7 @@ void VulkanModule::RecordClearCommands(uint32_t imageIndex)
     vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toTransferBarrier);
 
     // 3. Clear the image to red.
-    VkClearColorValue clearColor = { { 1.0f, 0.0f, 0.0f, 1.0f } };
+    VkClearColorValue clearColor = { { 0.0f, 1.0f, 1.0f, 1.0f } };
 
     vkCmdClearColorImage(commandBuffer, swapchainImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &subresourceRange);
 

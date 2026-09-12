@@ -19,21 +19,22 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+#include <vector>
 
 class FrameContext
 {
 public:
-    bool Init(VkDevice device);
+    bool Init(VkDevice device, uint32_t swapchainImageCount);
     void CleanUp();
 
     VkSemaphore GetImageAvailableSemaphore() const { return imageAvailableSemaphore; }
-    VkSemaphore GetRenderFinishedSemaphore() const { return renderFinishedSemaphore; }
+    VkSemaphore GetRenderFinishedSemaphore(uint32_t imageIndex) const { return renderFinishedSemaphores[imageIndex]; }
     VkFence GetInFlightFence() const { return inFlightFence; }
 
 private:
     VkDevice device = VK_NULL_HANDLE;
 
     VkSemaphore imageAvailableSemaphore = VK_NULL_HANDLE;
-    VkSemaphore renderFinishedSemaphore = VK_NULL_HANDLE;
+    std::vector<VkSemaphore> renderFinishedSemaphores;
     VkFence inFlightFence = VK_NULL_HANDLE;
 };
