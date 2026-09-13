@@ -29,6 +29,9 @@
     <Filter Include="ThirdParty\ImGui\Backends">
       <UniqueIdentifier>{e2a45cd0-73fa-4502-85c8-d4e715aa99e4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Passes">
+      <UniqueIdentifier>{78e98ff1-417f-4d1d-8ab6-8f01b944c191}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\main.cpp">
@@ -78,6 +81,9 @@
     </ClCompile>
     <ClCompile Include="Source\RenderModule.cpp">
       <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ImGuiPass.cpp">
+      <Filter>Source\Passes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -140,6 +146,9 @@
     </ClInclude>
     <ClInclude Include="Source\RenderModule.h">
       <Filter>Source\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ImGuiPass.h">
+      <Filter>Source\Passes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

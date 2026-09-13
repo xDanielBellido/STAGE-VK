@@ -71,6 +71,14 @@ public:
     void RegisterSwapchainListener(IVulkanSwapchainListener* listener);
     void UnregisterSwapchainListener(IVulkanSwapchainListener* listener);
 
+    static constexpr uint32_t API_VERSION = VK_API_VERSION_1_2;
+
+    uint32_t GetApiVersion() const { return API_VERSION; }
+    uint32_t GetGraphicsQueueFamily() const { return vulkanDevice.GetQueueFamilies().graphicsFamily.value(); }
+    uint32_t GetSwapchainImageCount() const { return vulkanSwapchain.GetImageCount(); }
+
+    void WaitIdle() const { vulkanDevice.WaitIdle(); }
+
 
 private:
 

@@ -323,7 +323,7 @@ void VulkanModule::CreateInstance()
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.pEngineName = "STAGE_VK Engine";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_2;
+    appInfo.apiVersion = API_VERSION;
 
     // 4. Ask GLFW which Vulkan instance extensions are required
     // to interact with the current windowing platform.

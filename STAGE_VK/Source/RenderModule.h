@@ -3,6 +3,8 @@
 #include "Module.h"
 #include "IVulkanSwapchainListener.h"
 
+#include "ImGuiPass.h"
+
 #include <vulkan/vulkan.h>
 
 #include <vector>
@@ -15,7 +17,9 @@ public:
     explicit RenderModule(VulkanModule& vulkanModule);
 
     bool Init() override;
+    void PreRender() override;
     void Render() override;
+    void PostRender() override;
     bool CleanUp() override;
 
     void BeforeSwapchainRecreate() override;
@@ -31,4 +35,7 @@ private:
 
     VkRenderPass renderPass = VK_NULL_HANDLE;
     std::vector<VkFramebuffer> swapchainFramebuffers;
+
+    ImGuiPass imguiPass;
+    bool renderPassOpen = false;
 };

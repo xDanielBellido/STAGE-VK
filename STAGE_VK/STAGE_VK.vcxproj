@@ -146,6 +146,7 @@
     <ClCompile Include="External Libraries\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Source\Application.cpp" />
     <ClCompile Include="Source\FrameContext.cpp" />
+    <ClCompile Include="Source\ImGuiPass.cpp" />
     <ClCompile Include="Source\main.cpp" />
     <ClCompile Include="Source\RenderModule.cpp" />
     <ClCompile Include="Source\VulkanCommandContext.cpp" />
@@ -167,6 +168,7 @@
     <ClInclude Include="Source\Application.h" />
     <ClInclude Include="Source\FrameContext.h" />
     <ClInclude Include="Source\Globals.h" />
+    <ClInclude Include="Source\ImGuiPass.h" />
     <ClInclude Include="Source\IVulkanSwapchainListener.h" />
     <ClInclude Include="Source\Module.h" />
     <ClInclude Include="Source\RenderModule.h" />

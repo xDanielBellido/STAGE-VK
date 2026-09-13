@@ -1,6 +1,12 @@
 #include "RenderModule.h"
 #include "VulkanModule.h"
 
+#include "Globals.h"
+#include "Application.h"
+#include "Window.h"
+
+#include "imgui.h"
+
 #include <stdexcept>
 
 RenderModule::RenderModule(VulkanModule& vulkanModule) : vulkanModule(vulkanModule)
@@ -12,9 +18,35 @@ bool RenderModule::Init()
     CreateRenderPass();
     CreateFramebuffers();
 
+    ImGuiPassInitInfo imguiInfo{};
+    imguiInfo.window = app->GetWindow().GetNativeHandle();
+    imguiInfo.apiVersion = vulkanModule.GetApiVersion();
+    imguiInfo.instance = vulkanModule.GetInstance();
+    imguiInfo.physicalDevice = vulkanModule.GetPhysicalDevice();
+    imguiInfo.device = vulkanModule.GetDevice();
+    imguiInfo.graphicsQueueFamily = vulkanModule.GetGraphicsQueueFamily();
+    imguiInfo.graphicsQueue = vulkanModule.GetGraphicsQueue();
+    imguiInfo.imageCount = vulkanModule.GetSwapchainImageCount();
+    imguiInfo.renderPass = renderPass;
+
+    if (!imguiPass.Init(imguiInfo))
+    {
+        return false;
+    }
+
     vulkanModule.RegisterSwapchainListener(this);
 
     return true;
+}
+
+void RenderModule::PreRender()
+{
+    if (!vulkanModule.IsFrameReady())
+    {
+        return;
+    }
+
+    imguiPass.StartFrame();
 }
 
 void RenderModule::Render()
@@ -23,6 +55,10 @@ void RenderModule::Render()
     {
         return;
     }
+
+    // Temporary integration test.
+    // Editor UI ownership moves to EditorModule in the next commit.
+    ImGui::ShowDemoWindow();
 
     VkCommandBuffer commandBuffer = vulkanModule.GetCommandBuffer();
     uint32_t imageIndex = vulkanModule.GetCurrentImageIndex();
@@ -41,16 +77,35 @@ void RenderModule::Render()
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    // Future rendering passes will record work here.
+    renderPassOpen = true;
+}
+
+void RenderModule::PostRender()
+{
+    if (!vulkanModule.IsFrameReady() || !renderPassOpen)
+    {
+        return;
+    }
+
+    VkCommandBuffer commandBuffer = vulkanModule.GetCommandBuffer();
+
+    imguiPass.Record(commandBuffer);
 
     vkCmdEndRenderPass(commandBuffer);
+
+    renderPassOpen = false;
 }
 
 bool RenderModule::CleanUp()
 {
+    vulkanModule.WaitIdle();
+
     vulkanModule.UnregisterSwapchainListener(this);
 
+    imguiPass.CleanUp();
     DestroyRenderTargets();
+
+    renderPassOpen = false;
 
     return true;
 }
@@ -150,6 +205,9 @@ void RenderModule::DestroyRenderTargets()
 
 void RenderModule::BeforeSwapchainRecreate()
 {
+    renderPassOpen = false;
+
+    imguiPass.BeforeSwapchainRecreate();
     DestroyRenderTargets();
 }
 
@@ -157,4 +215,6 @@ void RenderModule::AfterSwapchainRecreate()
 {
     CreateRenderPass();
     CreateFramebuffers();
+
+    imguiPass.AfterSwapchainRecreate(renderPass, vulkanModule.GetSwapchainImageCount());
 }
