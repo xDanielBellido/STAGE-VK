@@ -76,7 +76,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\External Libraries\Vulkan\Include;$(ProjectDir)\External Libraries\GLFW\include;$(ProjectDir)\External Libraries\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\External Libraries\Vulkan\Include;$(ProjectDir)\External Libraries\GLFW\include;$(ProjectDir)\External Libraries\glm;$(ProjectDir)\External Libraries\ImGui;$(ProjectDir)\External Libraries\ImGui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -94,6 +94,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)\External Libraries\Vulkan\Include;$(ProjectDir)\External Libraries\GLFW\include;$(ProjectDir)\External Libraries\glm;$(ProjectDir)\External Libraries\ImGui;$(ProjectDir)\External Libraries\ImGui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -106,7 +108,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\External Libraries\Vulkan\Include;$(ProjectDir)\External Libraries\GLFW\include;$(ProjectDir)\External Libraries\glm;%(AdditionalIncludeDirectories);$(ProjectDir)\External Libraries\Vulkan\Include;$(ProjectDir)\External Libraries\GLFW\include;$(ProjectDir)\External Libraries\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\External Libraries\Vulkan\Include;$(ProjectDir)\External Libraries\GLFW\include;$(ProjectDir)\External Libraries\glm;$(ProjectDir)\External Libraries\ImGui;$(ProjectDir)\External Libraries\ImGui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -125,7 +127,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)\External Libraries\Vulkan\Include;$(ProjectDir)\External Libraries\GLFW\include;$(ProjectDir)\External Libraries\glm;%(AdditionalIncludeDirectories);</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\External Libraries\Vulkan\Include;$(ProjectDir)\External Libraries\GLFW\include;$(ProjectDir)\External Libraries\glm;$(ProjectDir)\External Libraries\ImGui;$(ProjectDir)\External Libraries\ImGui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -135,6 +137,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="External Libraries\ImGui\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="External Libraries\ImGui\backends\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="External Libraries\ImGui\imgui.cpp" />
+    <ClCompile Include="External Libraries\ImGui\imgui_demo.cpp" />
+    <ClCompile Include="External Libraries\ImGui\imgui_draw.cpp" />
+    <ClCompile Include="External Libraries\ImGui\imgui_tables.cpp" />
+    <ClCompile Include="External Libraries\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Source\Application.cpp" />
     <ClCompile Include="Source\FrameContext.cpp" />
     <ClCompile Include="Source\main.cpp" />
@@ -145,6 +154,14 @@
     <ClCompile Include="Source\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="External Libraries\ImGui\backends\imgui_impl_glfw.h" />
+    <ClInclude Include="External Libraries\ImGui\backends\imgui_impl_vulkan.h" />
+    <ClInclude Include="External Libraries\ImGui\imconfig.h" />
+    <ClInclude Include="External Libraries\ImGui\imgui.h" />
+    <ClInclude Include="External Libraries\ImGui\imgui_internal.h" />
+    <ClInclude Include="External Libraries\ImGui\imstb_rectpack.h" />
+    <ClInclude Include="External Libraries\ImGui\imstb_textedit.h" />
+    <ClInclude Include="External Libraries\ImGui\imstb_truetype.h" />
     <ClInclude Include="Source\AppConfig.h" />
     <ClInclude Include="Source\Application.h" />
     <ClInclude Include="Source\FrameContext.h" />
