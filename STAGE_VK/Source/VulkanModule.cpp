@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <cstring>
 #include <iostream>
+#include <algorithm>
 
 namespace
 {
@@ -43,9 +44,6 @@ bool VulkanModule::Init()
     {
         return false;
     }
-
-    CreateRenderPass();
-    CreateFramebuffers();
 
     if (!commandContext.Init(vulkanDevice.GetDevice(), vulkanDevice.GetQueueFamilies().graphicsFamily.value()))
     {
@@ -114,8 +112,13 @@ void VulkanModule::PreRender()
         throw std::runtime_error("Failed to reset Vulkan command buffer.");
     }
 
-    // 5. Record the commands that clear the acquired swapchain image.
-    RecordClearCommands(currentImageIndex);
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to begin recording Vulkan command buffer.");
+    }
 
     frameReady = true;
 }
@@ -134,6 +137,11 @@ void VulkanModule::PostRender()
 
     // 1. Submit the recorded command buffer to the graphics queue.
     VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to record Vulkan command buffer.");
+    }
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -199,9 +207,16 @@ void VulkanModule::RecreateSwapchain()
     // 1. Make sure the GPU is no longer using swapchain-dependent resources.
     vulkanDevice.WaitIdle();
 
+    for (IVulkanSwapchainListener* listener : swapchainListeners)
+    {
+        if (listener)
+        {
+            listener->BeforeSwapchainRecreate();
+        }
+    }
+
     // 2. Destroy resources that depend on the current swapchain.
     frameContext.CleanUp();
-    DestroyRenderTargets();
     vulkanSwapchain.CleanUp();
 
     // 3. Create the swapchain again using the new framebuffer size.
@@ -210,13 +225,18 @@ void VulkanModule::RecreateSwapchain()
         throw std::runtime_error("Failed to recreate Vulkan swapchain.");
     }
 
-    CreateRenderPass();
-    CreateFramebuffers();
-
     // 4. Recreate synchronization objects that depend on the swapchain image count.
     if (!frameContext.Init(vulkanDevice.GetDevice(), vulkanSwapchain.GetImageCount()))
     {
         throw std::runtime_error("Failed to recreate Vulkan frame synchronization.");
+    }
+
+    for (IVulkanSwapchainListener* listener : swapchainListeners)
+    {
+        if (listener)
+        {
+            listener->AfterSwapchainRecreate();
+        }
     }
 
     currentImageIndex = 0;
@@ -230,7 +250,6 @@ bool VulkanModule::CleanUp()
 
     frameContext.CleanUp();
     commandContext.CleanUp();
-    DestroyRenderTargets();
     vulkanSwapchain.CleanUp();
     vulkanDevice.CleanUp();
 
@@ -250,6 +269,24 @@ bool VulkanModule::CleanUp()
 
 
     return true;
+}
+
+void VulkanModule::RegisterSwapchainListener(IVulkanSwapchainListener* listener)
+{
+    if (!listener)
+    {
+        return;
+    }
+
+    if (std::find(swapchainListeners.begin(), swapchainListeners.end(), listener) == swapchainListeners.end())
+    {
+        swapchainListeners.push_back(listener);
+    }
+}
+
+void VulkanModule::UnregisterSwapchainListener(IVulkanSwapchainListener* listener)
+{
+    swapchainListeners.erase(std::remove(swapchainListeners.begin(), swapchainListeners.end(), listener), swapchainListeners.end());
 }
 
 // ============================================================================
@@ -438,139 +475,5 @@ void VulkanModule::CreateSurface(GLFWwindow* window)
     if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create Vulkan window surface.");
-    }
-}
-
-// ============================================================================
-// Swapchain Render Targets
-// ============================================================================
-void VulkanModule::CreateRenderPass()
-{
-    VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = vulkanSwapchain.GetImageFormat();
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    VkAttachmentReference colorAttachmentReference{};
-    colorAttachmentReference.attachment = 0;
-    colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription subpass{};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentReference;
-
-    VkSubpassDependency dependency{};
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.srcAccessMask = 0;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    VkRenderPassCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    createInfo.attachmentCount = 1;
-    createInfo.pAttachments = &colorAttachment;
-    createInfo.subpassCount = 1;
-    createInfo.pSubpasses = &subpass;
-    createInfo.dependencyCount = 1;
-    createInfo.pDependencies = &dependency;
-
-    if (vkCreateRenderPass(vulkanDevice.GetDevice(), &createInfo, nullptr, &renderPass) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to create Vulkan render pass.");
-    }
-}
-
-void VulkanModule::CreateFramebuffers()
-{
-    const std::vector<VkImageView>& imageViews = vulkanSwapchain.GetImageViews();
-    swapchainFramebuffers.resize(imageViews.size(), VK_NULL_HANDLE);
-
-    for (size_t i = 0; i < imageViews.size(); ++i)
-    {
-        VkImageView attachments[] = { imageViews[i] };
-
-        VkFramebufferCreateInfo createInfo{};
-        createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        createInfo.renderPass = renderPass;
-        createInfo.attachmentCount = 1;
-        createInfo.pAttachments = attachments;
-        createInfo.width = vulkanSwapchain.GetExtent().width;
-        createInfo.height = vulkanSwapchain.GetExtent().height;
-        createInfo.layers = 1;
-
-        if (vkCreateFramebuffer(vulkanDevice.GetDevice(), &createInfo, nullptr, &swapchainFramebuffers[i]) != VK_SUCCESS)
-        {
-            throw std::runtime_error("Failed to create Vulkan framebuffer.");
-        }
-    }
-}
-
-void VulkanModule::DestroyRenderTargets()
-{
-    VkDevice device = vulkanDevice.GetDevice();
-
-    for (VkFramebuffer framebuffer : swapchainFramebuffers)
-    {
-        if (framebuffer != VK_NULL_HANDLE)
-        {
-            vkDestroyFramebuffer(device, framebuffer, nullptr);
-        }
-    }
-
-    swapchainFramebuffers.clear();
-
-    if (renderPass != VK_NULL_HANDLE)
-    {
-        vkDestroyRenderPass(device, renderPass, nullptr);
-        renderPass = VK_NULL_HANDLE;
-    }
-}
-// ============================================================================
-// Frame Recording
-// ============================================================================
-void VulkanModule::RecordClearCommands(uint32_t imageIndex)
-{
-    VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer();
-
-    // 1. Begin recording commands into the command buffer.
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to begin recording Vulkan command buffer.");
-    }
-
-    // 2. Define the clear color used when the render pass begins.
-    VkClearValue clearValue{};
-    clearValue.color = { { 0.0f, 1.0f, 1.0f, 1.0f } };
-
-    // 3. Describe this render pass execution.
-    VkRenderPassBeginInfo renderPassInfo{};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass;
-    renderPassInfo.framebuffer = swapchainFramebuffers[imageIndex];
-    renderPassInfo.renderArea.offset = { 0, 0 };
-    renderPassInfo.renderArea.extent = vulkanSwapchain.GetExtent();
-    renderPassInfo.clearValueCount = 1;
-    renderPassInfo.pClearValues = &clearValue;
-
-    // 4. Begin and immediately end the render pass.
-    // For now the render pass only clears the swapchain image.
-    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdEndRenderPass(commandBuffer);
-
-    // 5. Finish command recording.
-    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to record Vulkan command buffer.");
     }
 }

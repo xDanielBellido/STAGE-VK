@@ -33,6 +33,7 @@
 #include "VulkanSwapchain.h"
 #include "VulkanCommandContext.h"
 #include "FrameContext.h"
+#include "IVulkanSwapchainListener.h"
 
 #include <vector>
 
@@ -58,7 +59,18 @@ public:
     VkDevice GetDevice() const { return vulkanDevice.GetDevice(); }
     VkQueue GetGraphicsQueue() const { return vulkanDevice.GetGraphicsQueue(); }
     VkQueue GetPresentQueue() const { return vulkanDevice.GetPresentQueue(); }
-    VkRenderPass GetRenderPass() const { return renderPass; }
+
+    VkCommandBuffer GetCommandBuffer() const { return commandContext.GetCommandBuffer(); }
+    uint32_t GetCurrentImageIndex() const { return currentImageIndex; }
+    bool IsFrameReady() const { return frameReady; }
+
+    VkFormat GetSwapchainImageFormat() const { return vulkanSwapchain.GetImageFormat(); }
+    VkExtent2D GetSwapchainExtent() const { return vulkanSwapchain.GetExtent(); }
+    const std::vector<VkImageView>& GetSwapchainImageViews() const { return vulkanSwapchain.GetImageViews(); }
+
+    void RegisterSwapchainListener(IVulkanSwapchainListener* listener);
+    void UnregisterSwapchainListener(IVulkanSwapchainListener* listener);
+
 
 private:
 
@@ -74,14 +86,6 @@ private:
 
     // Surface
     void CreateSurface(GLFWwindow* window);
-
-    // Swapchain Render Targets
-    void CreateRenderPass();
-    void CreateFramebuffers();
-    void DestroyRenderTargets();
-
-    // Frame Recording
-    void RecordClearCommands(uint32_t imageIndex);
 
     void RecreateSwapchain();
 
@@ -101,10 +105,9 @@ private:
     VulkanCommandContext commandContext;
     FrameContext frameContext;
 
-    VkRenderPass renderPass = VK_NULL_HANDLE;
-    std::vector<VkFramebuffer> swapchainFramebuffers;
-
     uint32_t currentImageIndex = 0;
     bool frameReady = false;
     bool swapchainNeedsRecreation = false;
+
+    std::vector<IVulkanSwapchainListener*> swapchainListeners;
 };

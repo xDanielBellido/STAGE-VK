@@ -32,6 +32,7 @@
 class Module;
 class Window;
 class VulkanModule;
+class RenderModule;
 
 class Application
 {
@@ -42,6 +43,7 @@ private:
     std::vector<Module*> modules;
 
     VulkanModule* vulkanModule = nullptr;
+    RenderModule* renderModule = nullptr;
 
     bool paused = false;
 
@@ -63,9 +65,12 @@ public:
                             // Core Systems Access
     Window&                 GetWindow() { return *window; }
     const Window&           GetWindow() const { return *window; }
-
-    VulkanModule&        GetVulkanModule() { return *vulkanModule; }
-    const VulkanModule&  GetVulkanModule() const { return *vulkanModule; }
+                            
+                            // Module Getters
+    VulkanModule&         GetVulkanModule() { return *vulkanModule; }
+    const VulkanModule&   GetVulkanModule() const { return *vulkanModule; }
+    RenderModule&         GetRenderModule() { return *renderModule; }
+    const RenderModule&   GetRenderModule() const { return *renderModule; }
 
                             // Frame Info
     float                   GetDeltaTime() const { return deltaTime; }

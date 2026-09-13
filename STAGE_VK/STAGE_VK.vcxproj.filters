@@ -76,6 +76,9 @@
     <ClCompile Include="External Libraries\ImGui\backends\imgui_impl_vulkan.cpp">
       <Filter>ThirdParty\ImGui\Backends</Filter>
     </ClCompile>
+    <ClCompile Include="Source\RenderModule.cpp">
+      <Filter>Source\Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Globals.h">
@@ -131,6 +134,12 @@
     </ClInclude>
     <ClInclude Include="External Libraries\ImGui\backends\imgui_impl_vulkan.h">
       <Filter>ThirdParty\ImGui\Backends</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\IVulkanSwapchainListener.h">
+      <Filter>Source\Core\VulkanCore</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RenderModule.h">
+      <Filter>Source\Modules</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

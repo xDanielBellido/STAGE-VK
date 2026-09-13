@@ -147,6 +147,7 @@
     <ClCompile Include="Source\Application.cpp" />
     <ClCompile Include="Source\FrameContext.cpp" />
     <ClCompile Include="Source\main.cpp" />
+    <ClCompile Include="Source\RenderModule.cpp" />
     <ClCompile Include="Source\VulkanCommandContext.cpp" />
     <ClCompile Include="Source\VulkanDevice.cpp" />
     <ClCompile Include="Source\VulkanModule.cpp" />
@@ -166,7 +167,9 @@
     <ClInclude Include="Source\Application.h" />
     <ClInclude Include="Source\FrameContext.h" />
     <ClInclude Include="Source\Globals.h" />
+    <ClInclude Include="Source\IVulkanSwapchainListener.h" />
     <ClInclude Include="Source\Module.h" />
+    <ClInclude Include="Source\RenderModule.h" />
     <ClInclude Include="Source\VulkanCommandContext.h" />
     <ClInclude Include="Source\VulkanDevice.h" />
     <ClInclude Include="Source\VulkanModule.h" />
