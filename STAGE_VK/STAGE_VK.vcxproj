@@ -145,6 +145,7 @@
     <ClCompile Include="External Libraries\ImGui\imgui_tables.cpp" />
     <ClCompile Include="External Libraries\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Source\Application.cpp" />
+    <ClCompile Include="Source\EditorModule.cpp" />
     <ClCompile Include="Source\FrameContext.cpp" />
     <ClCompile Include="Source\ImGuiPass.cpp" />
     <ClCompile Include="Source\main.cpp" />
@@ -166,6 +167,7 @@
     <ClInclude Include="External Libraries\ImGui\imstb_truetype.h" />
     <ClInclude Include="Source\AppConfig.h" />
     <ClInclude Include="Source\Application.h" />
+    <ClInclude Include="Source\EditorModule.h" />
     <ClInclude Include="Source\FrameContext.h" />
     <ClInclude Include="Source\Globals.h" />
     <ClInclude Include="Source\ImGuiPass.h" />

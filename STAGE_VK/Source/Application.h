@@ -33,6 +33,7 @@ class Module;
 class Window;
 class VulkanModule;
 class RenderModule;
+class EditorModule;
 
 class Application
 {
@@ -44,6 +45,7 @@ private:
 
     VulkanModule* vulkanModule = nullptr;
     RenderModule* renderModule = nullptr;
+    EditorModule* editorModule = nullptr;
 
     bool paused = false;
 
@@ -71,6 +73,8 @@ public:
     const VulkanModule&   GetVulkanModule() const { return *vulkanModule; }
     RenderModule&         GetRenderModule() { return *renderModule; }
     const RenderModule&   GetRenderModule() const { return *renderModule; }
+    EditorModule&         GetEditorModule() { return *editorModule; }
+    const EditorModule&   GetEditorModule() const { return *editorModule; }
 
                             // Frame Info
     float                   GetDeltaTime() const { return deltaTime; }

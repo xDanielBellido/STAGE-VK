@@ -25,6 +25,8 @@ public:
     void BeforeSwapchainRecreate() override;
     void AfterSwapchainRecreate() override;
 
+    bool IsFrameActive() const { return frameActive; }
+
 private:
     void CreateRenderPass();
     void CreateFramebuffers();
@@ -38,4 +40,5 @@ private:
 
     ImGuiPass imguiPass;
     bool renderPassOpen = false;
+    bool frameActive = false;
 };

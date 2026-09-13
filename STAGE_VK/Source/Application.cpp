@@ -5,6 +5,7 @@
 #include "Window.h"
 #include "VulkanModule.h"
 #include "RenderModule.h"
+#include "EditorModule.h"
 
 #include <stdexcept>
 
@@ -14,6 +15,7 @@ Application::Application(const AppConfig& config) : config(config)
 
     modules.push_back(vulkanModule = new VulkanModule());
     modules.push_back(renderModule = new RenderModule(*vulkanModule));
+    modules.push_back(editorModule = new EditorModule(*renderModule));
 }
 
 Application::~Application()
@@ -113,6 +115,7 @@ bool Application::CleanUp()
         ret = (*it)->CleanUp();
     }
 
+    editorModule = nullptr;
     renderModule = nullptr;
     vulkanModule = nullptr;
     window.reset();
