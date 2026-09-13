@@ -58,6 +58,7 @@ public:
     VkDevice GetDevice() const { return vulkanDevice.GetDevice(); }
     VkQueue GetGraphicsQueue() const { return vulkanDevice.GetGraphicsQueue(); }
     VkQueue GetPresentQueue() const { return vulkanDevice.GetPresentQueue(); }
+    VkRenderPass GetRenderPass() const { return renderPass; }
 
 private:
 
@@ -73,6 +74,11 @@ private:
 
     // Surface
     void CreateSurface(GLFWwindow* window);
+
+    // Swapchain Render Targets
+    void CreateRenderPass();
+    void CreateFramebuffers();
+    void DestroyRenderTargets();
 
     // Frame Recording
     void RecordClearCommands(uint32_t imageIndex);
@@ -94,6 +100,9 @@ private:
     VulkanSwapchain vulkanSwapchain;
     VulkanCommandContext commandContext;
     FrameContext frameContext;
+
+    VkRenderPass renderPass = VK_NULL_HANDLE;
+    std::vector<VkFramebuffer> swapchainFramebuffers;
 
     uint32_t currentImageIndex = 0;
     bool frameReady = false;

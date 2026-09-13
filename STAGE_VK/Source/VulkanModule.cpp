@@ -44,6 +44,9 @@ bool VulkanModule::Init()
         return false;
     }
 
+    CreateRenderPass();
+    CreateFramebuffers();
+
     if (!commandContext.Init(vulkanDevice.GetDevice(), vulkanDevice.GetQueueFamilies().graphicsFamily.value()))
     {
         return false;
@@ -130,7 +133,7 @@ void VulkanModule::PostRender()
     VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer();
 
     // 1. Submit the recorded command buffer to the graphics queue.
-    VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -198,6 +201,7 @@ void VulkanModule::RecreateSwapchain()
 
     // 2. Destroy resources that depend on the current swapchain.
     frameContext.CleanUp();
+    DestroyRenderTargets();
     vulkanSwapchain.CleanUp();
 
     // 3. Create the swapchain again using the new framebuffer size.
@@ -205,6 +209,9 @@ void VulkanModule::RecreateSwapchain()
     {
         throw std::runtime_error("Failed to recreate Vulkan swapchain.");
     }
+
+    CreateRenderPass();
+    CreateFramebuffers();
 
     // 4. Recreate synchronization objects that depend on the swapchain image count.
     if (!frameContext.Init(vulkanDevice.GetDevice(), vulkanSwapchain.GetImageCount()))
@@ -223,6 +230,7 @@ bool VulkanModule::CleanUp()
 
     frameContext.CleanUp();
     commandContext.CleanUp();
+    DestroyRenderTargets();
     vulkanSwapchain.CleanUp();
     vulkanDevice.CleanUp();
 
@@ -434,12 +442,103 @@ void VulkanModule::CreateSurface(GLFWwindow* window)
 }
 
 // ============================================================================
+// Swapchain Render Targets
+// ============================================================================
+void VulkanModule::CreateRenderPass()
+{
+    VkAttachmentDescription colorAttachment{};
+    colorAttachment.format = vulkanSwapchain.GetImageFormat();
+    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    VkAttachmentReference colorAttachmentReference{};
+    colorAttachmentReference.attachment = 0;
+    colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription subpass{};
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &colorAttachmentReference;
+
+    VkSubpassDependency dependency{};
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependency.dstSubpass = 0;
+    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.srcAccessMask = 0;
+    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    VkRenderPassCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    createInfo.attachmentCount = 1;
+    createInfo.pAttachments = &colorAttachment;
+    createInfo.subpassCount = 1;
+    createInfo.pSubpasses = &subpass;
+    createInfo.dependencyCount = 1;
+    createInfo.pDependencies = &dependency;
+
+    if (vkCreateRenderPass(vulkanDevice.GetDevice(), &createInfo, nullptr, &renderPass) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create Vulkan render pass.");
+    }
+}
+
+void VulkanModule::CreateFramebuffers()
+{
+    const std::vector<VkImageView>& imageViews = vulkanSwapchain.GetImageViews();
+    swapchainFramebuffers.resize(imageViews.size(), VK_NULL_HANDLE);
+
+    for (size_t i = 0; i < imageViews.size(); ++i)
+    {
+        VkImageView attachments[] = { imageViews[i] };
+
+        VkFramebufferCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        createInfo.renderPass = renderPass;
+        createInfo.attachmentCount = 1;
+        createInfo.pAttachments = attachments;
+        createInfo.width = vulkanSwapchain.GetExtent().width;
+        createInfo.height = vulkanSwapchain.GetExtent().height;
+        createInfo.layers = 1;
+
+        if (vkCreateFramebuffer(vulkanDevice.GetDevice(), &createInfo, nullptr, &swapchainFramebuffers[i]) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create Vulkan framebuffer.");
+        }
+    }
+}
+
+void VulkanModule::DestroyRenderTargets()
+{
+    VkDevice device = vulkanDevice.GetDevice();
+
+    for (VkFramebuffer framebuffer : swapchainFramebuffers)
+    {
+        if (framebuffer != VK_NULL_HANDLE)
+        {
+            vkDestroyFramebuffer(device, framebuffer, nullptr);
+        }
+    }
+
+    swapchainFramebuffers.clear();
+
+    if (renderPass != VK_NULL_HANDLE)
+    {
+        vkDestroyRenderPass(device, renderPass, nullptr);
+        renderPass = VK_NULL_HANDLE;
+    }
+}
+// ============================================================================
 // Frame Recording
 // ============================================================================
 void VulkanModule::RecordClearCommands(uint32_t imageIndex)
 {
     VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer();
-    VkImage swapchainImage = vulkanSwapchain.GetImage(imageIndex);
 
     // 1. Begin recording commands into the command buffer.
     VkCommandBufferBeginInfo beginInfo{};
@@ -450,46 +549,24 @@ void VulkanModule::RecordClearCommands(uint32_t imageIndex)
         throw std::runtime_error("Failed to begin recording Vulkan command buffer.");
     }
 
-    // The whole swapchain image will be affected by the following operations.
-    VkImageSubresourceRange subresourceRange{};
-    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    subresourceRange.baseMipLevel = 0;
-    subresourceRange.levelCount = 1;
-    subresourceRange.baseArrayLayer = 0;
-    subresourceRange.layerCount = 1;
+    // 2. Define the clear color used when the render pass begins.
+    VkClearValue clearValue{};
+    clearValue.color = { { 0.0f, 1.0f, 1.0f, 1.0f } };
 
-    // 2. Transition the image so it can be used as the destination of a clear operation.
-    VkImageMemoryBarrier toTransferBarrier{};
-    toTransferBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    toTransferBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    toTransferBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    toTransferBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    toTransferBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    toTransferBarrier.image = swapchainImage;
-    toTransferBarrier.subresourceRange = subresourceRange;
-    toTransferBarrier.srcAccessMask = 0;
-    toTransferBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    // 3. Describe this render pass execution.
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = renderPass;
+    renderPassInfo.framebuffer = swapchainFramebuffers[imageIndex];
+    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.extent = vulkanSwapchain.GetExtent();
+    renderPassInfo.clearValueCount = 1;
+    renderPassInfo.pClearValues = &clearValue;
 
-    vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toTransferBarrier);
-
-    // 3. Clear the image to red.
-    VkClearColorValue clearColor = { { 0.0f, 1.0f, 1.0f, 1.0f } };
-
-    vkCmdClearColorImage(commandBuffer, swapchainImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &subresourceRange);
-
-    // 4. Transition the image into the layout required for presentation.
-    VkImageMemoryBarrier toPresentBarrier{};
-    toPresentBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    toPresentBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    toPresentBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-    toPresentBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    toPresentBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    toPresentBarrier.image = swapchainImage;
-    toPresentBarrier.subresourceRange = subresourceRange;
-    toPresentBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    toPresentBarrier.dstAccessMask = 0;
-
-    vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &toPresentBarrier);
+    // 4. Begin and immediately end the render pass.
+    // For now the render pass only clears the swapchain image.
+    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdEndRenderPass(commandBuffer);
 
     // 5. Finish command recording.
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
@@ -497,4 +574,3 @@ void VulkanModule::RecordClearCommands(uint32_t imageIndex)
         throw std::runtime_error("Failed to record Vulkan command buffer.");
     }
 }
-

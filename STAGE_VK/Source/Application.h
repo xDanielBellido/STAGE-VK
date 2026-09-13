@@ -64,8 +64,8 @@ public:
     Window&                 GetWindow() { return *window; }
     const Window&           GetWindow() const { return *window; }
 
-    VulkanModule&        GetBackendVK() { return *vulkanModule; }
-    const VulkanModule&  GetBackendVK() const { return *vulkanModule; }
+    VulkanModule&        GetVulkanModule() { return *vulkanModule; }
+    const VulkanModule&  GetVulkanModule() const { return *vulkanModule; }
 
                             // Frame Info
     float                   GetDeltaTime() const { return deltaTime; }
