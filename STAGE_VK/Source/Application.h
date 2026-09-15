@@ -69,12 +69,12 @@ public:
     const Window&           GetWindow() const { return *window; }
                             
                             // Module Getters
-    VulkanModule&         GetVulkanModule() { return *vulkanModule; }
-    const VulkanModule&   GetVulkanModule() const { return *vulkanModule; }
-    RenderModule&         GetRenderModule() { return *renderModule; }
-    const RenderModule&   GetRenderModule() const { return *renderModule; }
-    EditorModule&         GetEditorModule() { return *editorModule; }
-    const EditorModule&   GetEditorModule() const { return *editorModule; }
+    VulkanModule&           GetVulkanModule() { return *vulkanModule; }
+    const VulkanModule&     GetVulkanModule() const { return *vulkanModule; }
+    RenderModule&           GetRenderModule() { return *renderModule; }
+    const RenderModule&     GetRenderModule() const { return *renderModule; }
+    EditorModule&           GetEditorModule() { return *editorModule; }
+    const EditorModule&     GetEditorModule() const { return *editorModule; }
 
                             // Frame Info
     float                   GetDeltaTime() const { return deltaTime; }

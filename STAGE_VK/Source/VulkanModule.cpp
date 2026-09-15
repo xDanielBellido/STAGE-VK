@@ -25,17 +25,21 @@ namespace
 // ============================================================================
 // Module Lifetime
 // ============================================================================
+
 bool VulkanModule::Init()
 {
+    // Create the top-level Vulkan objects first.
     CreateInstance();
     CreateDebugMessenger();
     CreateSurface(app->GetWindow().GetNativeHandle());
 
+    // Select a physical device, create the logical device and retrieve queues.
     if (!vulkanDevice.Init(instance, surface))
     {
         return false;
     }
 
+    // The swapchain must match the current framebuffer size.
     int width = 0;
     int height = 0;
     app->GetWindow().GetFramebufferSize(width, height);
@@ -45,11 +49,13 @@ bool VulkanModule::Init()
         return false;
     }
 
+    // Create the command pool and primary command buffer used to record frames.
     if (!commandContext.Init(vulkanDevice.GetDevice(), vulkanDevice.GetQueueFamilies().graphicsFamily.value()))
     {
         return false;
     }
 
+    // Create the synchronization objects required by the frame lifecycle.
     if (!frameContext.Init(vulkanDevice.GetDevice(), vulkanSwapchain.GetImageCount()))
     {
         return false;
@@ -60,10 +66,13 @@ bool VulkanModule::Init()
 
 void VulkanModule::PreRender()
 {
+    // Rebuild the swapchain before starting a new frame if the previous frame
+    // or a resize event marked it as invalid.
     if (swapchainNeedsRecreation)
     {
         RecreateSwapchain();
 
+        // RecreateSwapchain() cannot rebuild a 0x0 framebuffer while minimized.
         if (swapchainNeedsRecreation)
         {
             return;
@@ -73,10 +82,11 @@ void VulkanModule::PreRender()
     VkDevice device = vulkanDevice.GetDevice();
     VkFence inFlightFence = frameContext.GetInFlightFence();
 
-    // 1. Wait until the GPU has finished using the resources from the previous frame.
+    // The current implementation reuses one command buffer, so the CPU must
+    // wait until the GPU has finished the previous submitted frame.
     vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
 
-    // 2. Acquire the next available image from the swapchain.
+    // Acquire one presentable image from the swapchain.
     VkResult result = vkAcquireNextImageKHR(device, vulkanSwapchain.GetSwapchain(), UINT64_MAX, frameContext.GetImageAvailableSemaphore(), VK_NULL_HANDLE, &currentImageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR)
@@ -86,6 +96,8 @@ void VulkanModule::PreRender()
         return;
     }
 
+    // A suboptimal swapchain can still be used for this frame, but should be
+    // recreated afterwards.
     if (result == VK_SUBOPTIMAL_KHR)
     {
         swapchainNeedsRecreation = true;
@@ -95,18 +107,13 @@ void VulkanModule::PreRender()
         throw std::runtime_error("Failed to acquire Vulkan swapchain image.");
     }
 
-    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
-    {
-        throw std::runtime_error("Failed to acquire Vulkan swapchain image.");
-    }
-
-    // 3. The image was acquired successfully, so the fence can now be reused
-    // for the work that will be submitted for this frame.
+    // The fence is reset only after an image was successfully acquired.
+    // It will be signaled again when this frame's GPU submission completes.
     vkResetFences(device, 1, &inFlightFence);
 
-    // 4. Reset the command buffer before recording the new frame.
     VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer();
 
+    // Reuse the primary command buffer for the new frame.
     if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to reset Vulkan command buffer.");
@@ -115,6 +122,8 @@ void VulkanModule::PreRender()
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
+    // VulkanModule begins recording, but deliberately leaves the command
+    // buffer open so RenderModule can record the actual rendering work.
     if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to begin recording Vulkan command buffer.");
@@ -125,6 +134,8 @@ void VulkanModule::PreRender()
 
 void VulkanModule::PostRender()
 {
+    // If image acquisition failed or the swapchain could not be recreated,
+    // there is no valid frame to submit.
     if (!frameReady)
     {
         return;
@@ -135,13 +146,16 @@ void VulkanModule::PostRender()
     VkFence inFlightFence = frameContext.GetInFlightFence();
     VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer();
 
-    // 1. Submit the recorded command buffer to the graphics queue.
-    VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-
+    // RenderModule has finished recording its work, so command-buffer
+    // recording can now be closed.
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to record Vulkan command buffer.");
+        throw std::runtime_error("Failed to end Vulkan command buffer.");
     }
+
+    // The graphics submission must wait until the acquired swapchain image is
+    // available before writing to its colour attachment.
+    VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -153,12 +167,13 @@ void VulkanModule::PostRender()
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
 
+    // Submitting the command buffer starts GPU execution.
+    // The fence signals CPU completion and the semaphore signals presentation.
     if (vkQueueSubmit(vulkanDevice.GetGraphicsQueue(), 1, &submitInfo, inFlightFence) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to submit Vulkan command buffer.");
     }
 
-    // 2. Present the rendered swapchain image.
     VkSwapchainKHR swapchain = vulkanSwapchain.GetSwapchain();
 
     VkPresentInfoKHR presentInfo{};
@@ -169,6 +184,7 @@ void VulkanModule::PostRender()
     presentInfo.pSwapchains = &swapchain;
     presentInfo.pImageIndices = &currentImageIndex;
 
+    // Presentation waits until rendering involving this image has completed.
     VkResult result = vkQueuePresentKHR(vulkanDevice.GetPresentQueue(), &presentInfo);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
@@ -185,69 +201,20 @@ void VulkanModule::PostRender()
 
 void VulkanModule::OnResize(int width, int height)
 {
+    // Actual recreation is deferred until PreRender().
+    // Zero-sized framebuffers are ignored while the window is minimized.
     if (width > 0 && height > 0)
     {
         swapchainNeedsRecreation = true;
     }
 }
 
-void VulkanModule::RecreateSwapchain()
-{
-    int width = 0;
-    int height = 0;
-    app->GetWindow().GetFramebufferSize(width, height);
-
-    // A minimized window may temporarily have a framebuffer size of 0x0.
-    // In that case there is nothing valid to recreate yet.
-    if (width == 0 || height == 0)
-    {
-        return;
-    }
-
-    // 1. Make sure the GPU is no longer using swapchain-dependent resources.
-    vulkanDevice.WaitIdle();
-
-    for (IVulkanSwapchainListener* listener : swapchainListeners)
-    {
-        if (listener)
-        {
-            listener->BeforeSwapchainRecreate();
-        }
-    }
-
-    // 2. Destroy resources that depend on the current swapchain.
-    frameContext.CleanUp();
-    vulkanSwapchain.CleanUp();
-
-    // 3. Create the swapchain again using the new framebuffer size.
-    if (!vulkanSwapchain.Init(vulkanDevice.GetPhysicalDevice(), vulkanDevice.GetDevice(), surface, vulkanDevice.GetQueueFamilies(), static_cast<uint32_t>(width), static_cast<uint32_t>(height)))
-    {
-        throw std::runtime_error("Failed to recreate Vulkan swapchain.");
-    }
-
-    // 4. Recreate synchronization objects that depend on the swapchain image count.
-    if (!frameContext.Init(vulkanDevice.GetDevice(), vulkanSwapchain.GetImageCount()))
-    {
-        throw std::runtime_error("Failed to recreate Vulkan frame synchronization.");
-    }
-
-    for (IVulkanSwapchainListener* listener : swapchainListeners)
-    {
-        if (listener)
-        {
-            listener->AfterSwapchainRecreate();
-        }
-    }
-
-    currentImageIndex = 0;
-    frameReady = false;
-    swapchainNeedsRecreation = false;
-}
-
 bool VulkanModule::CleanUp()
 {
+    // GPU resources cannot be destroyed while they are still in use.
     vulkanDevice.WaitIdle();
 
+    // Destroy resources in reverse dependency order.
     frameContext.CleanUp();
     commandContext.CleanUp();
     vulkanSwapchain.CleanUp();
@@ -267,9 +234,72 @@ bool VulkanModule::CleanUp()
         instance = VK_NULL_HANDLE;
     }
 
-
     return true;
 }
+
+// ============================================================================
+// Swapchain Recreation
+// ============================================================================
+
+void VulkanModule::RecreateSwapchain()
+{
+    int width = 0;
+    int height = 0;
+    app->GetWindow().GetFramebufferSize(width, height);
+
+    // Minimized windows commonly report a 0x0 framebuffer.
+    // Keep the recreation request pending until a valid size is available.
+    if (width == 0 || height == 0)
+    {
+        return;
+    }
+
+    // Swapchain-dependent resources must no longer be in use before they are
+    // destroyed.
+    vulkanDevice.WaitIdle();
+
+    // Give higher-level systems a chance to destroy resources that depend on
+    // the old swapchain, such as RenderModule framebuffers.
+    for (IVulkanSwapchainListener* listener : swapchainListeners)
+    {
+        if (listener)
+        {
+            listener->BeforeSwapchainRecreate();
+        }
+    }
+
+    frameContext.CleanUp();
+    vulkanSwapchain.CleanUp();
+
+    if (!vulkanSwapchain.Init(vulkanDevice.GetPhysicalDevice(), vulkanDevice.GetDevice(), surface, vulkanDevice.GetQueueFamilies(), static_cast<uint32_t>(width), static_cast<uint32_t>(height)))
+    {
+        throw std::runtime_error("Failed to recreate Vulkan swapchain.");
+    }
+
+    // Synchronization is recreated because the number of swapchain images may
+    // have changed.
+    if (!frameContext.Init(vulkanDevice.GetDevice(), vulkanSwapchain.GetImageCount()))
+    {
+        throw std::runtime_error("Failed to recreate Vulkan frame synchronization.");
+    }
+
+    // Higher-level systems can now rebuild against the new swapchain.
+    for (IVulkanSwapchainListener* listener : swapchainListeners)
+    {
+        if (listener)
+        {
+            listener->AfterSwapchainRecreate();
+        }
+    }
+
+    currentImageIndex = 0;
+    frameReady = false;
+    swapchainNeedsRecreation = false;
+}
+
+// ============================================================================
+// Swapchain Listeners
+// ============================================================================
 
 void VulkanModule::RegisterSwapchainListener(IVulkanSwapchainListener* listener)
 {
@@ -278,6 +308,7 @@ void VulkanModule::RegisterSwapchainListener(IVulkanSwapchainListener* listener)
         return;
     }
 
+    // Avoid registering the same listener more than once.
     if (std::find(swapchainListeners.begin(), swapchainListeners.end(), listener) == swapchainListeners.end())
     {
         swapchainListeners.push_back(listener);
@@ -292,31 +323,22 @@ void VulkanModule::UnregisterSwapchainListener(IVulkanSwapchainListener* listene
 // ============================================================================
 // Instance
 // ============================================================================
+
 void VulkanModule::CreateInstance()
 {
-    // Creates the main Vulkan instance used by the engine.
-    // It first checks that Vulkan is supported and that the requested validation
-    // layers are available, then describes the application, gathers the required
-    // instance extensions, configures optional validation layers, and finally
-    // creates the VkInstance.
-
-    // 1. Check that Vulkan is available on the current system.
-    // GLFW performs the platform-specific check for us.
+    // GLFW verifies that the current platform can provide Vulkan support.
     if (!glfwVulkanSupported())
     {
         throw std::runtime_error("GLFW reports that Vulkan is not supported on this system.");
     }
 
-    // 2. In Debug builds, make sure the requested validation layers
-    // are installed before trying to enable them.
+    // Validation layers are requested only for Debug builds.
     if (enableValidationLayers && !CheckValidationLayerSupport())
     {
         throw std::runtime_error("Validation layers requested, but not available.");
     }
 
-    // 3. Describe our application to Vulkan.
-    // This information mainly identifies the application, engine
-    // and Vulkan API version that we intend to use.
+    // Describe the application and the Vulkan API version it expects.
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = "STAGE_VK";
@@ -325,19 +347,14 @@ void VulkanModule::CreateInstance()
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = API_VERSION;
 
-    // 4. Ask GLFW which Vulkan instance extensions are required
-    // to interact with the current windowing platform.
     const auto extensions = GetRequiredExtensions();
 
-    // 5. Describe how the Vulkan instance must be created.
-    // Here we provide application info and required extensions.
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
     createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
     createInfo.ppEnabledExtensionNames = extensions.data();
 
-    // 6. Enable validation layers only in builds where they are requested
     if (enableValidationLayers)
     {
         createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
@@ -349,8 +366,7 @@ void VulkanModule::CreateInstance()
         createInfo.ppEnabledLayerNames = nullptr;
     }
 
-    // 7. Create the Vulkan instance.
-    // The instance is the application's main connection to the Vulkan API.
+    // VkInstance is the application's main connection to the Vulkan API.
     if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create Vulkan instance.");
@@ -359,48 +375,40 @@ void VulkanModule::CreateInstance()
 
 std::vector<const char*> VulkanModule::GetRequiredExtensions() const
 {
-    // 1. Ask GLFW how many Vulkan instance extensions are required 
-    // for the current windowing system.
+    // GLFW provides the platform-specific extensions required to create a
+    // Vulkan surface for its windows.
     uint32_t glfwExtensionCount = 0;
     const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
-    // 2. Make sure GLFW returned a valid list of required extensions.
     if (!glfwExtensions || glfwExtensionCount == 0)
     {
         throw std::runtime_error("Failed to get required GLFW Vulkan extensions.");
     }
 
-    // 3. Copy the GLFW-required extensions into our own list.
     std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-    // 4. In Debug builds, add the debug utilities extension required
-    // by the Vulkan Debug Messenger.
+    // The debug messenger requires VK_EXT_debug_utils.
     if (enableValidationLayers)
     {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
 
-    // 5. Return the complete list of instance extensions that must
-    // be enabled when creating the VkInstance.
     return extensions;
 }
 
 bool VulkanModule::CheckValidationLayerSupport() const
 {
-    // 1. Ask Vulkan how many instance layers are available on the system
     uint32_t layerCount = 0;
     vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
-    // 2. Allocate enough space and retrieve the properties of all available layers
     std::vector<VkLayerProperties> availableLayers(layerCount);
     vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-    // 3. Check every validation layer requested by STAGE_VK
+    // Every requested layer must exist on the current system.
     for (const char* layerName : validationLayers)
     {
         bool layerFound = false;
 
-        // 4. Search for the requested layer in the list reported by Vulkan
         for (const auto& layerProperties : availableLayers)
         {
             if (strcmp(layerName, layerProperties.layerName) == 0)
@@ -410,20 +418,19 @@ bool VulkanModule::CheckValidationLayerSupport() const
             }
         }
 
-        // 5. If any requested layer is missing, validation cannot be enabled
         if (!layerFound)
         {
             return false;
         }
     }
 
-    // 6. Every requested validation layer is available
     return true;
 }
 
 // ============================================================================
-// Debug
+// Validation
 // ============================================================================
+
 void VulkanModule::CreateDebugMessenger()
 {
     if (!enableValidationLayers)
@@ -437,6 +444,8 @@ void VulkanModule::CreateDebugMessenger()
     createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     createInfo.pfnUserCallback = DebugCallback;
 
+    // Debug-utils functions are extension functions, so their addresses are
+    // retrieved dynamically from the Vulkan instance.
     auto createFunction = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
 
     if (!createFunction || createFunction(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS)
@@ -464,14 +473,19 @@ void VulkanModule::DestroyDebugMessenger()
 VKAPI_ATTR VkBool32 VKAPI_CALL VulkanModule::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void* userData)
 {
     std::cerr << "[Vulkan Validation] " << callbackData->pMessage << '\n';
+
+    // Returning VK_FALSE tells Vulkan that execution should continue normally.
     return VK_FALSE;
 }
 
 // ============================================================================
 // Surface
 // ============================================================================
+
 void VulkanModule::CreateSurface(GLFWwindow* window)
 {
+    // GLFW creates the platform-specific VkSurfaceKHR used by the presentation
+    // system to display swapchain images in the application window.
     if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create Vulkan window surface.");

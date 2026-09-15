@@ -1,17 +1,18 @@
 /*
-    ===========================================================================
+    ==========================================================================
     VulkanCommandContext
-    ===========================================================================
+    ==========================================================================
 
-    This class manages the Vulkan objects used to record GPU commands.
+    This class manages the Vulkan command resources used to record GPU work.
 
-    A command pool manages the memory used by command buffers.
-    A command buffer stores recorded GPU commands before they are submitted
-    to a Vulkan queue for execution.
+    A command pool owns the memory from which command buffers are allocated.
+    A command buffer stores recorded Vulkan commands before they are submitted
+    to a queue for execution by the GPU.
 
     This class is responsible for:
     - creating the graphics command pool
-    - allocating a primary command buffer
+    - allocating the primary command buffer used by the renderer
+    - exposing the command resources to VulkanModule
     - releasing command resources during shutdown
 
     VkDevice is provided by VulkanDevice and is not owned by this class.
@@ -23,22 +24,25 @@
 
 class VulkanCommandContext
 {
+private:
+                                    // Non-owned Vulkan Handle
+    VkDevice                        device = VK_NULL_HANDLE;
+
+                                    // Command Resources
+    VkCommandPool                   commandPool = VK_NULL_HANDLE;
+    VkCommandBuffer                 commandBuffer = VK_NULL_HANDLE;
+
 public:
-    bool Init(VkDevice device, uint32_t graphicsQueueFamily);
-    void CleanUp();
+                                    // Command Context Lifetime
+    bool                            Init(VkDevice device, uint32_t graphicsQueueFamily);
+    void                            CleanUp();
 
-    VkCommandPool GetCommandPool() const { return commandPool; }
-    VkCommandBuffer GetCommandBuffer() const { return commandBuffer; }
-
-private:
-    void CreateCommandPool(uint32_t graphicsQueueFamily);
-    void AllocateCommandBuffer();
+                                    // Command Resources Access
+    VkCommandPool                   GetCommandPool() const { return commandPool; }
+    VkCommandBuffer                 GetCommandBuffer() const { return commandBuffer; }
 
 private:
-    // Non-owned handle provided by VulkanDevice
-    VkDevice device = VK_NULL_HANDLE;
-
-    // Command resources
-    VkCommandPool commandPool = VK_NULL_HANDLE;
-    VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
+                                    // Command Resource Creation
+    void                            CreateCommandPool(uint32_t graphicsQueueFamily);
+    void                            AllocateCommandBuffer();
 };
