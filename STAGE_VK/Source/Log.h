@@ -45,9 +45,9 @@ public:
     static const std::shared_ptr<MemoryLogSink>& GetMemorySink() { return memorySink; }
 };
 
-#define LOG_TRACE(...)      do { if (Log::IsInitialized()) Log::GetLogger()->trace(__VA_ARGS__); } while (false)
-#define LOG_DEBUG(...)      do { if (Log::IsInitialized()) Log::GetLogger()->debug(__VA_ARGS__); } while (false)
-#define LOG_INFO(...)       do { if (Log::IsInitialized()) Log::GetLogger()->info(__VA_ARGS__); } while (false)
-#define LOG_WARN(...)       do { if (Log::IsInitialized()) Log::GetLogger()->warn(__VA_ARGS__); } while (false)
-#define LOG_ERROR(...)      do { if (Log::IsInitialized()) Log::GetLogger()->error(__VA_ARGS__); } while (false)
-#define LOG_CRITICAL(...)   do { if (Log::IsInitialized()) Log::GetLogger()->critical(__VA_ARGS__); } while (false)
+#define LOG_TRACE(...)      do { if (Log::IsInitialized()) SPDLOG_LOGGER_CALL(Log::GetLogger(), spdlog::level::trace, __VA_ARGS__); } while (false)
+#define LOG_DEBUG(...)      do { if (Log::IsInitialized()) SPDLOG_LOGGER_CALL(Log::GetLogger(), spdlog::level::debug, __VA_ARGS__); } while (false)
+#define LOG_INFO(...)       do { if (Log::IsInitialized()) SPDLOG_LOGGER_CALL(Log::GetLogger(), spdlog::level::info, __VA_ARGS__); } while (false)
+#define LOG_WARN(...)       do { if (Log::IsInitialized()) SPDLOG_LOGGER_CALL(Log::GetLogger(), spdlog::level::warn, __VA_ARGS__); } while (false)
+#define LOG_ERROR(...)      do { if (Log::IsInitialized()) SPDLOG_LOGGER_CALL(Log::GetLogger(), spdlog::level::err, __VA_ARGS__); } while (false)
+#define LOG_CRITICAL(...)   do { if (Log::IsInitialized()) SPDLOG_LOGGER_CALL(Log::GetLogger(), spdlog::level::critical, __VA_ARGS__); } while (false)

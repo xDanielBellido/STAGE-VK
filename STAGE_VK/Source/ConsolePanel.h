@@ -14,7 +14,12 @@
 
 #pragma once
 
+#include "LogEntry.h"
+
 #include "imgui.h"
+
+#include <cstddef>
+#include <optional>
 
 class ConsolePanel
 {
@@ -23,5 +28,16 @@ public:
 
 private:
     ImGuiTextFilter filter;
+
     bool autoScroll = true;
+    bool collapse = true;
+
+    bool showLogs = true;
+    bool showWarnings = true;
+    bool showErrors = true;
+
+    std::optional<LogEntry> selectedEntry;
+    int selectedRepeatCount = 1;
+
+    std::size_t lastEntryCount = 0;
 };

@@ -29,8 +29,17 @@ void MemoryLogSink::sink_it_(const spdlog::details::log_msg& message)
     }
 
     LogEntry entry{};
+
     entry.level = message.level;
+    entry.timestamp = message.time;
     entry.message = std::string(message.payload.data(), message.payload.size());
+
+    if (!message.source.empty())
+    {
+        entry.file = message.source.filename ? message.source.filename : "";
+        entry.function = message.source.funcname ? message.source.funcname : "";
+        entry.line = message.source.line;
+    }
 
     entries.push_back(std::move(entry));
 }
