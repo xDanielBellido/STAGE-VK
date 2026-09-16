@@ -1,3 +1,5 @@
+#include "Globals.h"
+#include "Application.h"
 #include "EditorModule.h"
 #include "RenderModule.h"
 
@@ -14,6 +16,8 @@ void EditorModule::Render()
         return;
     }
 
+    performancePanel.AddFPS(app->GetFPS());
+
     DrawMainMenu();
 
     ImGuiIO& io = ImGui::GetIO();
@@ -23,9 +27,16 @@ void EditorModule::Render()
         //ImGui::DockSpaceOverViewport();
     }
 
-    if (showDemoWindow)
+    // Draw panels and windows here:
+
+    if (showConsole)
     {
-        ImGui::ShowDemoWindow(&showDemoWindow);
+        consolePanel.Draw(&showConsole);
+    }
+
+    if (showPerformance)
+    {
+        performancePanel.Draw(&showPerformance);
     }
 }
 
@@ -35,10 +46,13 @@ void EditorModule::DrawMainMenu()
     {
         return;
     }
-
+ 
     if (ImGui::BeginMenu("Window"))
     {
-        ImGui::MenuItem("Dear ImGui Demo", nullptr, &showDemoWindow);
+        // Add menu options here:
+
+        ImGui::MenuItem("Console", nullptr, &showConsole);
+        ImGui::MenuItem("Performance", nullptr, &showPerformance);
 
         ImGui::EndMenu();
     }

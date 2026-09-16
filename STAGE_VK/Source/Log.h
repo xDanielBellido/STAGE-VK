@@ -24,10 +24,13 @@
 
 #include <spdlog/spdlog.h>
 
+class MemoryLogSink;
+
 class Log
 {
 private:
     static std::shared_ptr<spdlog::logger> logger;
+    static std::shared_ptr<MemoryLogSink> memorySink;
 
 public:
     // Logging Lifetime
@@ -39,6 +42,7 @@ public:
 
     // Logger Access
     static const std::shared_ptr<spdlog::logger>& GetLogger() { return logger; }
+    static const std::shared_ptr<MemoryLogSink>& GetMemorySink() { return memorySink; }
 };
 
 #define LOG_TRACE(...)      do { if (Log::IsInitialized()) Log::GetLogger()->trace(__VA_ARGS__); } while (false)

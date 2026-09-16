@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Module.h"
+#include "ConsolePanel.h"
+#include "PerformancePanel.h"
 
 class RenderModule;
 
@@ -17,6 +19,10 @@ private:
 private:
     RenderModule& renderModule;
 
-    bool showDemoWindow = true;
-};
+    ConsolePanel consolePanel;
+    PerformancePanel performancePanel;
 
+    bool showConsole = true;
+    bool showDemoWindow = true;
+    bool showPerformance = true;
+};
