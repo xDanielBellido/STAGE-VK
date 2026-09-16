@@ -1,4 +1,5 @@
 #include "ImGuiPass.h"
+#include "Log.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -6,7 +7,6 @@
 
 #include <GLFW/glfw3.h>
 
-#include <iostream>
 #include <stdexcept>
 
 namespace
@@ -17,7 +17,7 @@ namespace
     {
         if (result != VK_SUCCESS)
         {
-            std::cerr << "[ImGui Vulkan] VkResult = " << result << '\n';
+            LOG_ERROR("[ImGui Vulkan] VkResult = {}", static_cast<int>(result));
         }
     }
 }

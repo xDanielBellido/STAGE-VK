@@ -1,6 +1,6 @@
 #include "Globals.h"
 #include "VulkanModule.h"
-
+#include "Log.h"
 #include "Application.h"
 #include "Window.h"
 
@@ -8,7 +8,6 @@
 
 #include <stdexcept>
 #include <cstring>
-#include <iostream>
 #include <algorithm>
 
 namespace
@@ -472,9 +471,23 @@ void VulkanModule::DestroyDebugMessenger()
 
 VKAPI_ATTR VkBool32 VKAPI_CALL VulkanModule::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void* userData)
 {
-    std::cerr << "[Vulkan Validation] " << callbackData->pMessage << '\n';
+    if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+    {
+        LOG_ERROR("[Vulkan Validation] {}", callbackData->pMessage);
+    }
+    else if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+    {
+        LOG_WARN("[Vulkan Validation] {}", callbackData->pMessage);
+    }
+    else if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)
+    {
+        LOG_INFO("[Vulkan Validation] {}", callbackData->pMessage);
+    }
+    else
+    {
+        LOG_TRACE("[Vulkan Validation] {}", callbackData->pMessage);
+    }
 
-    // Returning VK_FALSE tells Vulkan that execution should continue normally.
     return VK_FALSE;
 }
 

@@ -1,6 +1,6 @@
 #include "VulkanDevice.h"
+#include "Log.h"
 
-#include <iostream>
 #include <set>
 #include <stdexcept>
 #include <vector>
@@ -90,7 +90,7 @@ void VulkanDevice::PickPhysicalDevice()
     VkPhysicalDeviceProperties properties{};
     vkGetPhysicalDeviceProperties(physicalDevice, &properties);
 
-    std::cout << "[Vulkan] Selected GPU: " << properties.deviceName << '\n';
+    LOG_INFO("Selected GPU: {}", properties.deviceName);
 }
 
 bool VulkanDevice::IsDeviceSuitable(VkPhysicalDevice device) const
