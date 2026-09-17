@@ -1,5 +1,6 @@
 #include "Globals.h"
 #include "Application.h"
+#include "ProfileScope.h"
 
 #include "Module.h"
 #include "Window.h"
@@ -87,24 +88,44 @@ void Application::Update()
 
     profiler.BeginFrame(deltaTime, fps);
 
-    for (auto& module : modules)
     {
-        module->Update();
-    }
+        PROFILE_SCOPE(profiler, "Frame");
 
-    for (auto& module : modules)
-    {
-        module->PreRender();
-    }
+        {
+            PROFILE_SCOPE(profiler, "Update");
 
-    for (auto& module : modules)
-    {
-        module->Render();
-    }
+            for (auto& module : modules)
+            {
+                module->Update();
+            }
+        }
 
-    for (auto it = modules.rbegin(); it != modules.rend(); ++it)
-    {
-        (*it)->PostRender();
+        {
+            PROFILE_SCOPE(profiler, "PreRender");
+
+            for (auto& module : modules)
+            {
+                module->PreRender();
+            }
+        }
+
+        {
+            PROFILE_SCOPE(profiler, "Render");
+
+            for (auto& module : modules)
+            {
+                module->Render();
+            }
+        }
+
+        {
+            PROFILE_SCOPE(profiler, "PostRender");
+
+            for (auto it = modules.rbegin(); it != modules.rend(); ++it)
+            {
+                (*it)->PostRender();
+            }
+        }
     }
 
     profiler.EndFrame();

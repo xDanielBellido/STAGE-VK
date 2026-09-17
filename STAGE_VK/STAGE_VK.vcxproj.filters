@@ -115,6 +115,9 @@
     <ClCompile Include="Source\Profiler.cpp">
       <Filter>Source\Editor\Profiler</Filter>
     </ClCompile>
+    <ClCompile Include="Source\VulkanGpuProfiler.cpp">
+      <Filter>Source\Editor\Profiler</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Globals.h">
@@ -205,6 +208,12 @@
       <Filter>Source\Editor\Profiler</Filter>
     </ClInclude>
     <ClInclude Include="Source\Profiler.h">
+      <Filter>Source\Editor\Profiler</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ProfileScope.h">
+      <Filter>Source\Editor\Profiler</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\VulkanGpuProfiler.h">
       <Filter>Source\Editor\Profiler</Filter>
     </ClInclude>
   </ItemGroup>

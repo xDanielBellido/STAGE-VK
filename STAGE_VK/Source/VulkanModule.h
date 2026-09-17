@@ -66,6 +66,7 @@
 #include "VulkanSwapchain.h"
 #include "VulkanCommandContext.h"
 #include "FrameContext.h"
+#include "VulkanGpuProfiler.h"
 #include "IVulkanSwapchainListener.h"
 
 #include <vector>
@@ -86,6 +87,7 @@ private:
     VulkanSwapchain vulkanSwapchain;
     VulkanCommandContext commandContext;
     FrameContext frameContext;
+    VulkanGpuProfiler gpuProfiler;
 
     // Current frame state
     uint32_t currentImageIndex = 0;

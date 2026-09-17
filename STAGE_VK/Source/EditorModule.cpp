@@ -2,6 +2,7 @@
 #include "Application.h"
 #include "EditorModule.h"
 #include "RenderModule.h"
+#include "ProfileScope.h"
 
 #include "imgui.h"
 
@@ -11,6 +12,8 @@ EditorModule::EditorModule(RenderModule& renderModule) : renderModule(renderModu
 
 void EditorModule::Render()
 {
+    PROFILE_SCOPE(app->GetProfiler(), "EditorModule::Render");
+
     if (!renderModule.IsFrameActive())
     {
         return;

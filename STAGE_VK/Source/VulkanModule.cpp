@@ -3,6 +3,7 @@
 #include "Log.h"
 #include "Application.h"
 #include "Window.h"
+#include "ProfileScope.h"
 
 #include <GLFW/glfw3.h>
 
@@ -54,6 +55,11 @@ bool VulkanModule::Init()
         return false;
     }
 
+    if (!gpuProfiler.Init(vulkanDevice.GetPhysicalDevice(), vulkanDevice.GetDevice(), vulkanDevice.GetQueueFamilies().graphicsFamily.value()))
+    {
+        return false;
+    }
+
     // Create the synchronization objects required by the frame lifecycle.
     if (!frameContext.Init(vulkanDevice.GetDevice(), vulkanSwapchain.GetImageCount()))
     {
@@ -65,13 +71,12 @@ bool VulkanModule::Init()
 
 void VulkanModule::PreRender()
 {
-    // Rebuild the swapchain before starting a new frame if the previous frame
-    // or a resize event marked it as invalid.
+    PROFILE_SCOPE(app->GetProfiler(), "VulkanModule::PreRender");
+
     if (swapchainNeedsRecreation)
     {
         RecreateSwapchain();
 
-        // RecreateSwapchain() cannot rebuild a 0x0 framebuffer while minimized.
         if (swapchainNeedsRecreation)
         {
             return;
@@ -81,12 +86,19 @@ void VulkanModule::PreRender()
     VkDevice device = vulkanDevice.GetDevice();
     VkFence inFlightFence = frameContext.GetInFlightFence();
 
-    // The current implementation reuses one command buffer, so the CPU must
-    // wait until the GPU has finished the previous submitted frame.
-    vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
+    {
+        PROFILE_SCOPE(app->GetProfiler(), "WaitForPreviousFrame");
+        vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
+    }
 
-    // Acquire one presentable image from the swapchain.
-    VkResult result = vkAcquireNextImageKHR(device, vulkanSwapchain.GetSwapchain(), UINT64_MAX, frameContext.GetImageAvailableSemaphore(), VK_NULL_HANDLE, &currentImageIndex);
+    gpuProfiler.ResolvePreviousFrame(app->GetProfiler());
+
+    VkResult result = VK_SUCCESS;
+
+    {
+        PROFILE_SCOPE(app->GetProfiler(), "AcquireSwapchainImage");
+        result = vkAcquireNextImageKHR(device, vulkanSwapchain.GetSwapchain(), UINT64_MAX, frameContext.GetImageAvailableSemaphore(), VK_NULL_HANDLE, &currentImageIndex);
+    }
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR)
     {
@@ -95,8 +107,6 @@ void VulkanModule::PreRender()
         return;
     }
 
-    // A suboptimal swapchain can still be used for this frame, but should be
-    // recreated afterwards.
     if (result == VK_SUBOPTIMAL_KHR)
     {
         swapchainNeedsRecreation = true;
@@ -106,26 +116,30 @@ void VulkanModule::PreRender()
         throw std::runtime_error("Failed to acquire Vulkan swapchain image.");
     }
 
-    // The fence is reset only after an image was successfully acquired.
-    // It will be signaled again when this frame's GPU submission completes.
     vkResetFences(device, 1, &inFlightFence);
 
     VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer();
 
-    // Reuse the primary command buffer for the new frame.
-    if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to reset Vulkan command buffer.");
+        PROFILE_SCOPE(app->GetProfiler(), "BeginCommandBuffer");
+
+        if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to reset Vulkan command buffer.");
+        }
+
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+        if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to begin recording Vulkan command buffer.");
+        }
     }
 
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-    // VulkanModule begins recording, but deliberately leaves the command
-    // buffer open so RenderModule can record the actual rendering work.
-    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+    if (app->GetProfiler().IsRecording())
     {
-        throw std::runtime_error("Failed to begin recording Vulkan command buffer.");
+        gpuProfiler.BeginFrame(commandBuffer);
     }
 
     frameReady = true;
@@ -133,8 +147,8 @@ void VulkanModule::PreRender()
 
 void VulkanModule::PostRender()
 {
-    // If image acquisition failed or the swapchain could not be recreated,
-    // there is no valid frame to submit.
+    PROFILE_SCOPE(app->GetProfiler(), "VulkanModule::PostRender");
+
     if (!frameReady)
     {
         return;
@@ -145,15 +159,17 @@ void VulkanModule::PostRender()
     VkFence inFlightFence = frameContext.GetInFlightFence();
     VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer();
 
-    // RenderModule has finished recording its work, so command-buffer
-    // recording can now be closed.
-    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+    gpuProfiler.EndFrame(commandBuffer);
+
     {
-        throw std::runtime_error("Failed to end Vulkan command buffer.");
+        PROFILE_SCOPE(app->GetProfiler(), "EndCommandBuffer");
+
+        if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to end Vulkan command buffer.");
+        }
     }
 
-    // The graphics submission must wait until the acquired swapchain image is
-    // available before writing to its colour attachment.
     VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
     VkSubmitInfo submitInfo{};
@@ -166,12 +182,16 @@ void VulkanModule::PostRender()
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
 
-    // Submitting the command buffer starts GPU execution.
-    // The fence signals CPU completion and the semaphore signals presentation.
-    if (vkQueueSubmit(vulkanDevice.GetGraphicsQueue(), 1, &submitInfo, inFlightFence) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to submit Vulkan command buffer.");
+        PROFILE_SCOPE(app->GetProfiler(), "QueueSubmit");
+
+        if (vkQueueSubmit(vulkanDevice.GetGraphicsQueue(), 1, &submitInfo, inFlightFence) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to submit Vulkan command buffer.");
+        }
     }
+
+    gpuProfiler.MarkSubmitted();
 
     VkSwapchainKHR swapchain = vulkanSwapchain.GetSwapchain();
 
@@ -183,8 +203,12 @@ void VulkanModule::PostRender()
     presentInfo.pSwapchains = &swapchain;
     presentInfo.pImageIndices = &currentImageIndex;
 
-    // Presentation waits until rendering involving this image has completed.
-    VkResult result = vkQueuePresentKHR(vulkanDevice.GetPresentQueue(), &presentInfo);
+    VkResult result = VK_SUCCESS;
+
+    {
+        PROFILE_SCOPE(app->GetProfiler(), "Present");
+        result = vkQueuePresentKHR(vulkanDevice.GetPresentQueue(), &presentInfo);
+    }
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
     {
@@ -214,6 +238,7 @@ bool VulkanModule::CleanUp()
     vulkanDevice.WaitIdle();
 
     // Destroy resources in reverse dependency order.
+    gpuProfiler.CleanUp();
     frameContext.CleanUp();
     commandContext.CleanUp();
     vulkanSwapchain.CleanUp();

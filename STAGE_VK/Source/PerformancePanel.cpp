@@ -14,12 +14,15 @@ void PerformancePanel::Draw(const Profiler& profiler, bool* open)
         return;
     }
 
-    const FrameProfileData& currentFrame = profiler.GetCurrentFrame();
+    const FrameProfileData& currentFrame = profiler.GetLatestFrame();
     const auto& frameHistory = profiler.GetFrameHistory();
 
     ImGui::Text("Frame: %llu", static_cast<unsigned long long>(currentFrame.frameNumber));
     ImGui::Text("FPS: %.1f", currentFrame.fps);
     ImGui::Text("Frame Time: %.2f ms", currentFrame.frameTimeMs);
+    ImGui::Text("CPU Time: %.2f ms", currentFrame.cpuFrameTimeMs);
+    ImGui::Text("GPU Time: %.2f ms", currentFrame.gpuFrameTimeMs);
+
 
     std::vector<float> fpsHistory;
     fpsHistory.reserve(frameHistory.size());
@@ -36,6 +39,21 @@ void PerformancePanel::Draw(const Profiler& profiler, bool* open)
     else
     {
         ImGui::TextDisabled("Waiting for frame history...");
+    }
+
+    ImGui::Separator();
+
+    ImGui::Text("CPU Events");
+
+    for (const CpuProfileEvent& event : currentFrame.cpuEvents)
+    {
+        ImGui::Indent(static_cast<float>(event.depth) * 14.0f);
+
+        ImGui::Text("%s", event.name.c_str());
+        ImGui::SameLine();
+        ImGui::TextDisabled("%.3f ms", event.durationMs);
+
+        ImGui::Unindent(static_cast<float>(event.depth) * 14.0f);
     }
 
     ImGui::End();

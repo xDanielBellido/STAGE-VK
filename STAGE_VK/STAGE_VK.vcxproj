@@ -161,6 +161,7 @@
     <ClCompile Include="Source\RenderModule.cpp" />
     <ClCompile Include="Source\VulkanCommandContext.cpp" />
     <ClCompile Include="Source\VulkanDevice.cpp" />
+    <ClCompile Include="Source\VulkanGpuProfiler.cpp" />
     <ClCompile Include="Source\VulkanModule.cpp" />
     <ClCompile Include="Source\VulkanSwapchain.cpp" />
     <ClCompile Include="Source\Window.cpp" />
@@ -190,9 +191,11 @@
     <ClInclude Include="Source\Module.h" />
     <ClInclude Include="Source\PerformancePanel.h" />
     <ClInclude Include="Source\Profiler.h" />
+    <ClInclude Include="Source\ProfileScope.h" />
     <ClInclude Include="Source\RenderModule.h" />
     <ClInclude Include="Source\VulkanCommandContext.h" />
     <ClInclude Include="Source\VulkanDevice.h" />
+    <ClInclude Include="Source\VulkanGpuProfiler.h" />
     <ClInclude Include="Source\VulkanModule.h" />
     <ClInclude Include="Source\VulkanSwapchain.h" />
     <ClInclude Include="Source\Window.h" />
