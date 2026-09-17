@@ -1,19 +1,12 @@
 #include "PerformancePanel.h"
 
+#include "Profiler.h"
+
 #include "imgui.h"
 
-PerformancePanel::PerformancePanel()
-{
-    fpsHistory.resize(MAX_FPS_SAMPLES, 0.0f);
-}
+#include <vector>
 
-void PerformancePanel::AddFPS(float fps)
-{
-    fpsHistory[nextSample] = fps;
-    nextSample = (nextSample + 1) % MAX_FPS_SAMPLES;
-}
-
-void PerformancePanel::Draw(bool* open)
+void PerformancePanel::Draw(const Profiler& profiler, bool* open)
 {
     if (!ImGui::Begin("Performance", open))
     {
@@ -21,12 +14,29 @@ void PerformancePanel::Draw(bool* open)
         return;
     }
 
-    const float currentFPS = fpsHistory[(nextSample + MAX_FPS_SAMPLES - 1) % MAX_FPS_SAMPLES];
+    const FrameProfileData& currentFrame = profiler.GetCurrentFrame();
+    const auto& frameHistory = profiler.GetFrameHistory();
 
-    ImGui::Text("FPS: %.1f", currentFPS);
-    ImGui::Text("Frame Time: %.2f ms", currentFPS > 0.0f ? 1000.0f / currentFPS : 0.0f);
+    ImGui::Text("Frame: %llu", static_cast<unsigned long long>(currentFrame.frameNumber));
+    ImGui::Text("FPS: %.1f", currentFrame.fps);
+    ImGui::Text("Frame Time: %.2f ms", currentFrame.frameTimeMs);
 
-    ImGui::PlotHistogram("##FPS", fpsHistory.data(), static_cast<int>(fpsHistory.size()), nextSample, nullptr, 0.0f, 144.0f, ImVec2(0.0f, 100.0f));
+    std::vector<float> fpsHistory;
+    fpsHistory.reserve(frameHistory.size());
+
+    for (const FrameProfileData& frame : frameHistory)
+    {
+        fpsHistory.push_back(frame.fps);
+    }
+
+    if (!fpsHistory.empty())
+    {
+        ImGui::PlotHistogram("##FPS", fpsHistory.data(), static_cast<int>(fpsHistory.size()), 0, nullptr, 0.0f, 144.0f, ImVec2(0.0f, 100.0f));
+    }
+    else
+    {
+        ImGui::TextDisabled("Waiting for frame history...");
+    }
 
     ImGui::End();
 }

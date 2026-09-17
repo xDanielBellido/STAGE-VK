@@ -24,6 +24,7 @@
 #pragma once
 
 #include "AppConfig.h"
+#include "Profiler.h"
 
 #include <memory>
 #include <vector>
@@ -39,6 +40,7 @@ class Application
 {
 private:
     AppConfig config;
+    Profiler profiler;
 
     std::unique_ptr<Window> window;
     std::vector<Module*> modules;
@@ -75,6 +77,10 @@ public:
     const RenderModule&     GetRenderModule() const { return *renderModule; }
     EditorModule&           GetEditorModule() { return *editorModule; }
     const EditorModule&     GetEditorModule() const { return *editorModule; }
+
+                            // Profiler
+    Profiler&               GetProfiler() { return profiler; }
+    const Profiler&         GetProfiler() const { return profiler; }
 
                             // Frame Info
     float                   GetDeltaTime() const { return deltaTime; }

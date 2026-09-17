@@ -157,6 +157,7 @@
     <ClCompile Include="Source\main.cpp" />
     <ClCompile Include="Source\MemoryLogSink.cpp" />
     <ClCompile Include="Source\PerformancePanel.cpp" />
+    <ClCompile Include="Source\Profiler.cpp" />
     <ClCompile Include="Source\RenderModule.cpp" />
     <ClCompile Include="Source\VulkanCommandContext.cpp" />
     <ClCompile Include="Source\VulkanDevice.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="Source\EditorIcons.h" />
     <ClInclude Include="Source\EditorModule.h" />
     <ClInclude Include="Source\FrameContext.h" />
+    <ClInclude Include="Source\FrameProfileData.h" />
     <ClInclude Include="Source\Globals.h" />
     <ClInclude Include="Source\ImGuiPass.h" />
     <ClInclude Include="Source\IVulkanSwapchainListener.h" />
@@ -187,6 +189,7 @@
     <ClInclude Include="Source\MemoryLogSink.h" />
     <ClInclude Include="Source\Module.h" />
     <ClInclude Include="Source\PerformancePanel.h" />
+    <ClInclude Include="Source\Profiler.h" />
     <ClInclude Include="Source\RenderModule.h" />
     <ClInclude Include="Source\VulkanCommandContext.h" />
     <ClInclude Include="Source\VulkanDevice.h" />

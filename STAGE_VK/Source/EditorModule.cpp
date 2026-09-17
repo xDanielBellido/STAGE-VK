@@ -16,8 +16,6 @@ void EditorModule::Render()
         return;
     }
 
-    performancePanel.AddFPS(app->GetFPS());
-
     DrawMainMenu();
 
     ImGuiIO& io = ImGui::GetIO();
@@ -36,7 +34,7 @@ void EditorModule::Render()
 
     if (showPerformance)
     {
-        performancePanel.Draw(&showPerformance);
+        performancePanel.Draw(app->GetProfiler(), &showPerformance);
     }
 }
 

@@ -85,6 +85,8 @@ void Application::Update()
         return;
     }
 
+    profiler.BeginFrame(deltaTime, fps);
+
     for (auto& module : modules)
     {
         module->Update();
@@ -104,6 +106,8 @@ void Application::Update()
     {
         (*it)->PostRender();
     }
+
+    profiler.EndFrame();
 }
 
 bool Application::CleanUp()

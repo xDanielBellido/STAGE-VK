@@ -38,6 +38,12 @@
     <Filter Include="Source\Editor">
       <UniqueIdentifier>{1ce98b29-3e6c-47d6-aca8-a31daa5e6639}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Editor\Console">
+      <UniqueIdentifier>{2101be7a-faec-4c87-85dc-a8dca17aeb13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Editor\Profiler">
+      <UniqueIdentifier>{ad6f17bc-c5fe-47ca-be6c-e844ed535ed8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\main.cpp">
@@ -101,10 +107,13 @@
       <Filter>Source\Core\Logging</Filter>
     </ClCompile>
     <ClCompile Include="Source\ConsolePanel.cpp">
-      <Filter>Source\Editor</Filter>
+      <Filter>Source\Editor\Console</Filter>
     </ClCompile>
     <ClCompile Include="Source\PerformancePanel.cpp">
-      <Filter>Source\Editor</Filter>
+      <Filter>Source\Editor\Profiler</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Profiler.cpp">
+      <Filter>Source\Editor\Profiler</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -183,14 +192,20 @@
     <ClInclude Include="Source\MemoryLogSink.h">
       <Filter>Source\Core\Logging</Filter>
     </ClInclude>
-    <ClInclude Include="Source\ConsolePanel.h">
-      <Filter>Source\Editor</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\PerformancePanel.h">
-      <Filter>Source\Editor</Filter>
-    </ClInclude>
     <ClInclude Include="Source\EditorIcons.h">
       <Filter>Source\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ConsolePanel.h">
+      <Filter>Source\Editor\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\PerformancePanel.h">
+      <Filter>Source\Editor\Profiler</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\FrameProfileData.h">
+      <Filter>Source\Editor\Profiler</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Profiler.h">
+      <Filter>Source\Editor\Profiler</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
