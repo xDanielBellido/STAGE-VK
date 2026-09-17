@@ -1,5 +1,4 @@
 #pragma once
-
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -14,6 +13,20 @@ struct CpuProfileEvent
     uint32_t depth = 0;
 };
 
+struct RenderingProfileData
+{
+    uint32_t width = 0;
+    uint32_t height = 0;
+
+    uint32_t swapchainImageCount = 0;
+    uint32_t currentImageIndex = 0;
+
+    uint32_t commandBufferCount = 0;
+    uint32_t renderPassCount = 0;
+    uint32_t queueSubmissionCount = 0;
+    uint32_t presentCount = 0;
+};
+
 struct FrameProfileData
 {
     uint64_t frameNumber = 0;
@@ -25,4 +38,6 @@ struct FrameProfileData
     float gpuFrameTimeMs = 0.0f;
 
     std::vector<CpuProfileEvent> cpuEvents;
+
+    RenderingProfileData rendering;
 };

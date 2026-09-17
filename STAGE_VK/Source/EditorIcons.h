@@ -8,3 +8,5 @@
 #define ICON_FA_TRIANGLE_EXCLAMATION   "\xEF\x81\xB1" // U+F071
 #define ICON_FA_CIRCLE_XMARK           "\xEF\x81\x97" // U+F057
 #define ICON_FA_COPY                   "\xEF\x83\x85" // U+F0C5
+#define ICON_FA_PLAY                    "\xEF\x81\x8B" // U+F04B
+#define ICON_FA_PAUSE                   "\xEF\x81\x8C" // U+F04C

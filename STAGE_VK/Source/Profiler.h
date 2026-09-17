@@ -17,6 +17,7 @@ private:
     static constexpr std::size_t INVALID_EVENT_INDEX = std::numeric_limits<std::size_t>::max();
 
     bool recording = true;
+    bool recordingRequested = true;
 
     uint64_t nextFrameNumber = 0;
     uint32_t currentCpuDepth = 0;
@@ -38,13 +39,19 @@ public:
                                     // GPU Profiling
     void                            SetLatestGpuFrameTime(float gpuFrameTimeMs);
 
+                                    // Rendering Profiling
+    void                            SetRenderingContext(uint32_t width, uint32_t height, uint32_t swapchainImageCount, uint32_t currentImageIndex, uint32_t commandBufferCount);
+    void                            RecordRenderPass();
+    void                            RecordQueueSubmission();
+    void                            RecordPresent();
+
                                     // Recording Control
     void                            StartRecording();
     void                            StopRecording();
     void                            Clear();
 
                                     // State
-    bool                            IsRecording() const { return recording; }
+    bool                            IsRecording() const { return recordingRequested; }
 
                                     // Frame Data
     const FrameProfileData&         GetCurrentFrame() const { return currentFrame; }

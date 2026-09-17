@@ -2,6 +2,8 @@
 
 void Profiler::BeginFrame(float deltaTimeSeconds, float fps)
 {
+    recording = recordingRequested;
+
     if (!recording)
     {
         return;
@@ -83,14 +85,54 @@ void Profiler::SetLatestGpuFrameTime(float gpuFrameTimeMs)
     frameHistory.back().gpuFrameTimeMs = gpuFrameTimeMs;
 }
 
+void Profiler::SetRenderingContext(uint32_t width, uint32_t height, uint32_t swapchainImageCount, uint32_t currentImageIndex, uint32_t commandBufferCount)
+{
+    if (!recording)
+    {
+        return;
+    }
+
+    currentFrame.rendering.width = width;
+    currentFrame.rendering.height = height;
+
+    currentFrame.rendering.swapchainImageCount = swapchainImageCount;
+    currentFrame.rendering.currentImageIndex = currentImageIndex;
+
+    currentFrame.rendering.commandBufferCount = commandBufferCount;
+}
+
+void Profiler::RecordRenderPass()
+{
+    if (recording)
+    {
+        ++currentFrame.rendering.renderPassCount;
+    }
+}
+
+void Profiler::RecordQueueSubmission()
+{
+    if (recording)
+    {
+        ++currentFrame.rendering.queueSubmissionCount;
+    }
+}
+
+void Profiler::RecordPresent()
+{
+    if (recording)
+    {
+        ++currentFrame.rendering.presentCount;
+    }
+}
+
 void Profiler::StartRecording()
 {
-    recording = true;
+    recordingRequested = true;
 }
 
 void Profiler::StopRecording()
 {
-    recording = false;
+    recordingRequested = false;
 }
 
 void Profiler::Clear()

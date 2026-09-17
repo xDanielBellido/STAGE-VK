@@ -142,6 +142,10 @@ void VulkanModule::PreRender()
         gpuProfiler.BeginFrame(commandBuffer);
     }
 
+    const VkExtent2D extent = vulkanSwapchain.GetExtent();
+
+    app->GetProfiler().SetRenderingContext(extent.width, extent.height, vulkanSwapchain.GetImageCount(), currentImageIndex, 1);
+
     frameReady = true;
 }
 
@@ -191,6 +195,8 @@ void VulkanModule::PostRender()
         }
     }
 
+    app->GetProfiler().RecordQueueSubmission();
+
     gpuProfiler.MarkSubmitted();
 
     VkSwapchainKHR swapchain = vulkanSwapchain.GetSwapchain();
@@ -209,6 +215,8 @@ void VulkanModule::PostRender()
         PROFILE_SCOPE(app->GetProfiler(), "Present");
         result = vkQueuePresentKHR(vulkanDevice.GetPresentQueue(), &presentInfo);
     }
+
+    app->GetProfiler().RecordPresent();
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
     {
