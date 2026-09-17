@@ -1,5 +1,6 @@
 #include "ConsolePanel.h"
 
+#include "EditorIcons.h"
 #include "Log.h"
 #include "MemoryLogSink.h"
 
@@ -20,18 +21,6 @@ namespace
         Log,
         Warning,
         Error
-    };
-
-    enum class ConsoleIcon
-    {
-        Trash,
-        Collapse,
-        AutoScroll,
-        Search,
-        Info,
-        Warning,
-        Error,
-        Copy
     };
 
     struct DisplayEntry
@@ -182,82 +171,7 @@ namespace
     // =========================================================================
     // Icon Drawing
     // =========================================================================
-
-    void DrawIcon(ImDrawList* drawList, ConsoleIcon icon, const ImVec2& center, float radius, ImU32 color)
-    {
-        const float thickness = 1.6f;
-
-        switch (icon)
-        {
-        case ConsoleIcon::Info:
-        {
-            drawList->AddCircle(center, radius, color, 20, thickness);
-            drawList->AddCircleFilled(ImVec2(center.x, center.y - radius * 0.35f), radius * 0.11f, color);
-            drawList->AddLine(ImVec2(center.x, center.y - radius * 0.05f), ImVec2(center.x, center.y + radius * 0.45f), color, thickness);
-            break;
-        }
-
-        case ConsoleIcon::Warning:
-        {
-            const ImVec2 top(center.x, center.y - radius);
-            const ImVec2 left(center.x - radius, center.y + radius * 0.80f);
-            const ImVec2 right(center.x + radius, center.y + radius * 0.80f);
-
-            drawList->AddTriangle(top, left, right, color, thickness);
-            drawList->AddLine(ImVec2(center.x, center.y - radius * 0.35f), ImVec2(center.x, center.y + radius * 0.25f), color, thickness);
-            drawList->AddCircleFilled(ImVec2(center.x, center.y + radius * 0.50f), radius * 0.09f, color);
-            break;
-        }
-
-        case ConsoleIcon::Error:
-        {
-            drawList->AddCircle(center, radius, color, 20, thickness);
-            drawList->AddLine(ImVec2(center.x - radius * 0.42f, center.y - radius * 0.42f), ImVec2(center.x + radius * 0.42f, center.y + radius * 0.42f), color, thickness);
-            drawList->AddLine(ImVec2(center.x + radius * 0.42f, center.y - radius * 0.42f), ImVec2(center.x - radius * 0.42f, center.y + radius * 0.42f), color, thickness);
-            break;
-        }
-
-        case ConsoleIcon::Trash:
-        {
-            const float halfWidth = radius * 0.60f;
-
-            drawList->AddRect(ImVec2(center.x - halfWidth, center.y - radius * 0.35f), ImVec2(center.x + halfWidth, center.y + radius * 0.75f), color, 1.0f, 0, thickness);
-            drawList->AddLine(ImVec2(center.x - radius * 0.75f, center.y - radius * 0.55f), ImVec2(center.x + radius * 0.75f, center.y - radius * 0.55f), color, thickness);
-            drawList->AddLine(ImVec2(center.x - radius * 0.25f, center.y - radius * 0.80f), ImVec2(center.x + radius * 0.25f, center.y - radius * 0.80f), color, thickness);
-            break;
-        }
-
-        case ConsoleIcon::Collapse:
-        {
-            drawList->AddRect(ImVec2(center.x - radius * 0.80f, center.y - radius * 0.45f), ImVec2(center.x + radius * 0.40f, center.y + radius * 0.75f), color, 1.0f, 0, thickness);
-            drawList->AddRect(ImVec2(center.x - radius * 0.35f, center.y - radius * 0.80f), ImVec2(center.x + radius * 0.80f, center.y + radius * 0.35f), color, 1.0f, 0, thickness);
-            break;
-        }
-
-        case ConsoleIcon::AutoScroll:
-        {
-            drawList->AddLine(ImVec2(center.x, center.y - radius * 0.80f), ImVec2(center.x, center.y + radius * 0.45f), color, thickness);
-            drawList->AddTriangleFilled(ImVec2(center.x - radius * 0.45f, center.y + radius * 0.15f), ImVec2(center.x + radius * 0.45f, center.y + radius * 0.15f), ImVec2(center.x, center.y + radius * 0.80f), color);
-            break;
-        }
-
-        case ConsoleIcon::Search:
-        {
-            drawList->AddCircle(ImVec2(center.x - radius * 0.15f, center.y - radius * 0.15f), radius * 0.58f, color, 16, thickness);
-            drawList->AddLine(ImVec2(center.x + radius * 0.28f, center.y + radius * 0.28f), ImVec2(center.x + radius * 0.85f, center.y + radius * 0.85f), color, thickness);
-            break;
-        }
-
-        case ConsoleIcon::Copy:
-        {
-            drawList->AddRect(ImVec2(center.x - radius * 0.70f, center.y - radius * 0.45f), ImVec2(center.x + radius * 0.35f, center.y + radius * 0.70f), color, 1.0f, 0, thickness);
-            drawList->AddRect(ImVec2(center.x - radius * 0.30f, center.y - radius * 0.75f), ImVec2(center.x + radius * 0.70f, center.y + radius * 0.35f), color, 1.0f, 0, thickness);
-            break;
-        }
-        }
-    }
-
-    bool IconButton(const char* id, ConsoleIcon icon, const char* label, bool selected = false, const ImVec4* iconColor = nullptr, const char* tooltip = nullptr)
+    bool IconButton(const char* id, const char* icon, const char* label, bool selected = false, const ImVec4* iconColor = nullptr, const char* tooltip = nullptr)
     {
         const ImGuiStyle& style = ImGui::GetStyle();
 
@@ -265,6 +179,8 @@ namespace
         const float iconArea = height - style.FramePadding.y * 2.0f;
 
         const bool hasLabel = label && label[0] != '\0';
+
+        const ImVec2 iconSize = ImGui::CalcTextSize(icon);
         const ImVec2 textSize = hasLabel ? ImGui::CalcTextSize(label) : ImVec2(0.0f, 0.0f);
 
         float width = style.FramePadding.x * 2.0f + iconArea;
@@ -303,14 +219,14 @@ namespace
 
         drawList->AddRectFilled(position, ImVec2(position.x + width, position.y + height), backgroundColor, style.FrameRounding);
 
-        const ImVec2 iconCenter(
-            position.x + style.FramePadding.x + iconArea * 0.5f,
-            position.y + height * 0.5f
+        const ImVec2 iconPosition(
+            position.x + style.FramePadding.x + (iconArea - iconSize.x) * 0.5f,
+            position.y + (height - iconSize.y) * 0.5f
         );
 
         const ImU32 actualIconColor = iconColor ? ImGui::GetColorU32(*iconColor) : ImGui::GetColorU32(ImGuiCol_Text);
 
-        DrawIcon(drawList, icon, iconCenter, iconArea * 0.32f, actualIconColor);
+        drawList->AddText(iconPosition, actualIconColor, icon);
 
         if (hasLabel)
         {
@@ -337,9 +253,16 @@ namespace
 
         ImGui::Dummy(ImVec2(frameHeight, frameHeight));
 
-        const ImVec2 center(iconPosition.x + frameHeight * 0.5f, iconPosition.y + frameHeight * 0.5f);
+        const ImVec2 iconSize = ImGui::CalcTextSize(ICON_FA_MAGNIFYING_GLASS);
 
-        DrawIcon(ImGui::GetWindowDrawList(), ConsoleIcon::Search, center, frameHeight * 0.23f, ImGui::GetColorU32(ImGuiCol_TextDisabled));
+        ImGui::GetWindowDrawList()->AddText(
+            ImVec2(
+                iconPosition.x + (frameHeight - iconSize.x) * 0.5f,
+                iconPosition.y + (frameHeight - iconSize.y) * 0.5f
+            ),
+            ImGui::GetColorU32(ImGuiCol_TextDisabled),
+            ICON_FA_MAGNIFYING_GLASS
+        );
 
         ImGui::SameLine(0.0f, 3.0f);
 
@@ -401,7 +324,7 @@ void ConsolePanel::Draw(bool* open)
     // Toolbar
     // =========================================================================
 
-    if (IconButton("##ConsoleClear", ConsoleIcon::Trash, "Clear", false, nullptr, "Clear console"))
+    if (IconButton("##ConsoleClear", ICON_FA_TRASH_CAN, "Clear", false, nullptr, "Clear console"))
     {
         memorySink->Clear();
         entries.clear();
@@ -412,14 +335,14 @@ void ConsolePanel::Draw(bool* open)
 
     ImGui::SameLine();
 
-    if (IconButton("##ConsoleCollapse", ConsoleIcon::Collapse, "Collapse", collapse, nullptr, "Collapse identical messages"))
+    if (IconButton("##ConsoleCollapse", ICON_FA_LAYER_GROUP, "Collapse", collapse, nullptr, "Collapse identical messages"))
     {
         collapse = !collapse;
     }
 
     ImGui::SameLine();
 
-    if (IconButton("##ConsoleAutoScroll", ConsoleIcon::AutoScroll, "Auto Scroll", autoScroll, nullptr, "Automatically scroll to new messages"))
+    if (IconButton("##ConsoleAutoScroll", ICON_FA_ARROW_DOWN, "Auto Scroll", autoScroll, nullptr, "Automatically scroll to new messages"))
     {
         autoScroll = !autoScroll;
     }
@@ -438,21 +361,21 @@ void ConsolePanel::Draw(bool* open)
     const std::string warningCountText = std::to_string(warningCount);
     const std::string errorCountText = std::to_string(errorCount);
 
-    if (IconButton("##ConsoleLogs", ConsoleIcon::Info, logCountText.c_str(), showLogs, &logColor, "Show / hide logs"))
+    if (IconButton("##ConsoleLogs", ICON_FA_CIRCLE_INFO, logCountText.c_str(), showLogs, &logColor, "Show / hide logs"))
     {
         showLogs = !showLogs;
     }
 
     ImGui::SameLine();
 
-    if (IconButton("##ConsoleWarnings", ConsoleIcon::Warning, warningCountText.c_str(), showWarnings, &warningColor, "Show / hide warnings"))
+    if (IconButton("##ConsoleWarnings", ICON_FA_TRIANGLE_EXCLAMATION, warningCountText.c_str(), showWarnings, &warningColor, "Show / hide warnings"))
     {
         showWarnings = !showWarnings;
     }
 
     ImGui::SameLine();
 
-    if (IconButton("##ConsoleErrors", ConsoleIcon::Error, errorCountText.c_str(), showErrors, &errorColor, "Show / hide errors"))
+    if (IconButton("##ConsoleErrors", ICON_FA_CIRCLE_XMARK, errorCountText.c_str(), showErrors, &errorColor, "Show / hide errors"))
     {
         showErrors = !showErrors;
     }
@@ -517,20 +440,25 @@ void ConsolePanel::Draw(bool* open)
         const ConsoleSeverity severity = GetConsoleSeverity(entry.level);
         const ImVec4 severityColor = GetSeverityColor(severity);
 
-        ConsoleIcon severityIcon = ConsoleIcon::Info;
+        const char* severityIcon = ICON_FA_CIRCLE_INFO;
 
         if (severity == ConsoleSeverity::Warning)
         {
-            severityIcon = ConsoleIcon::Warning;
+            severityIcon = ICON_FA_TRIANGLE_EXCLAMATION;
         }
         else if (severity == ConsoleSeverity::Error)
         {
-            severityIcon = ConsoleIcon::Error;
+            severityIcon = ICON_FA_CIRCLE_XMARK;
         }
 
         const float centerY = (rowMin.y + rowMax.y) * 0.5f;
+        const ImVec2 severityIconSize = ImGui::CalcTextSize(severityIcon);
 
-        DrawIcon(drawList, severityIcon, ImVec2(rowMin.x + 13.0f, centerY), 6.5f, ImGui::GetColorU32(severityColor));
+        drawList->AddText(
+            ImVec2(rowMin.x + 8.0f, centerY - severityIconSize.y * 0.5f),
+            ImGui::GetColorU32(severityColor),
+            severityIcon
+        );
 
         const std::string timestamp = FormatTimestamp(entry.timestamp);
         const ImVec2 timestampSize = ImGui::CalcTextSize(timestamp.c_str());
@@ -567,7 +495,7 @@ void ConsolePanel::Draw(bool* open)
             messageEndX = badgeX - 10.0f;
         }
 
-        const ImVec2 messagePosition(rowMin.x + 28.0f, rowMin.y + style.FramePadding.y);
+        const ImVec2 messagePosition(rowMin.x + 30.0f, rowMin.y + style.FramePadding.y);
 
         drawList->PushClipRect(messagePosition, ImVec2(messageEndX, rowMax.y), true);
         drawList->AddText(messagePosition, ImGui::GetColorU32(ImGuiCol_Text), entry.message.c_str());
@@ -604,33 +532,18 @@ void ConsolePanel::Draw(bool* open)
         const ConsoleSeverity severity = GetConsoleSeverity(selectedEntry->level);
         const ImVec4 severityColor = GetSeverityColor(severity);
 
-        ConsoleIcon severityIcon = ConsoleIcon::Info;
+        const char* severityIcon = ICON_FA_CIRCLE_INFO;
 
         if (severity == ConsoleSeverity::Warning)
         {
-            severityIcon = ConsoleIcon::Warning;
+            severityIcon = ICON_FA_TRIANGLE_EXCLAMATION;
         }
         else if (severity == ConsoleSeverity::Error)
         {
-            severityIcon = ConsoleIcon::Error;
+            severityIcon = ICON_FA_CIRCLE_XMARK;
         }
 
-        const ImVec2 iconPosition = ImGui::GetCursorScreenPos();
-        const float headerHeight = ImGui::GetFrameHeight();
-
-        ImGui::Dummy(ImVec2(headerHeight, headerHeight));
-
-        DrawIcon(
-            ImGui::GetWindowDrawList(),
-            severityIcon,
-            ImVec2(iconPosition.x + headerHeight * 0.5f, iconPosition.y + headerHeight * 0.5f),
-            headerHeight * 0.25f,
-            ImGui::GetColorU32(severityColor)
-        );
-
-        ImGui::SameLine();
-
-        ImGui::TextColored(severityColor, "%s", GetLevelName(selectedEntry->level));
+        ImGui::TextColored(severityColor, "%s  %s", severityIcon, GetLevelName(selectedEntry->level));
 
         ImGui::SameLine();
 
@@ -641,7 +554,7 @@ void ConsolePanel::Draw(bool* open)
 
         ImGui::SameLine();
 
-        if (IconButton("##ConsoleCopy", ConsoleIcon::Copy, "Copy", false, nullptr, "Copy message to clipboard"))
+        if (IconButton("##ConsoleCopy", ICON_FA_COPY, "Copy", false, nullptr, "Copy message to clipboard"))
         {
             ImGui::SetClipboardText(selectedEntry->message.c_str());
         }

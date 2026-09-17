@@ -176,6 +176,7 @@
     <ClInclude Include="Source\AppConfig.h" />
     <ClInclude Include="Source\Application.h" />
     <ClInclude Include="Source\ConsolePanel.h" />
+    <ClInclude Include="Source\EditorIcons.h" />
     <ClInclude Include="Source\EditorModule.h" />
     <ClInclude Include="Source\FrameContext.h" />
     <ClInclude Include="Source\Globals.h" />

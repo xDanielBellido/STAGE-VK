@@ -7,11 +7,46 @@
 
 #include <GLFW/glfw3.h>
 
+#include <filesystem>
 #include <stdexcept>
 
 namespace
 {
     constexpr uint32_t IMGUI_MIN_IMAGE_COUNT = 2;
+
+    std::filesystem::path FindFontAwesomePath()
+    {
+        constexpr const char* FONT_FILE = "Font Awesome 7 Free-Solid-900.otf";
+
+        std::filesystem::path directory = std::filesystem::current_path();
+
+        for (int i = 0; i < 5; ++i)
+        {
+            const std::filesystem::path candidates[] =
+            {
+                directory / "External Libraries" / "FontAwesome" / FONT_FILE,
+                directory / "External Libraries" / "Font Awesome" / FONT_FILE,
+                directory / "External Libraries" / "FontAwesome" / "otfs" / FONT_FILE
+            };
+
+            for (const std::filesystem::path& candidate : candidates)
+            {
+                if (std::filesystem::exists(candidate))
+                {
+                    return std::filesystem::absolute(candidate);
+                }
+            }
+
+            if (!directory.has_parent_path())
+            {
+                break;
+            }
+
+            directory = directory.parent_path();
+        }
+
+        throw std::runtime_error("Could not find Font Awesome file: " + std::string(FONT_FILE));
+    }
 
     void CheckVkResult(VkResult result)
     {
@@ -45,6 +80,31 @@ bool ImGuiPass::Init(const ImGuiPassInitInfo& initInfo)
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+    io.Fonts->AddFontDefault();
+
+    ImFontConfig iconConfig{};
+    iconConfig.MergeMode = true;
+    iconConfig.PixelSnapH = true;
+
+    const std::filesystem::path iconFontPath = FindFontAwesomePath();
+
+#if IMGUI_VERSION_NUM >= 19200
+    ImFont* iconFont = io.Fonts->AddFontFromFileTTF(iconFontPath.string().c_str(), 0.0f, &iconConfig);
+#else
+    static const ImWchar iconRanges[] = { 0xF000, 0xF8FF, 0 };
+    ImFont* iconFont = io.Fonts->AddFontFromFileTTF(iconFontPath.string().c_str(), 13.0f, &iconConfig, iconRanges);
+#endif
+
+    if (!iconFont)
+    {
+        throw std::runtime_error("Failed to load Font Awesome icon font: " + iconFontPath.string());
+    }
+
+    if (!iconFont)
+    {
+        throw std::runtime_error("Failed to load Font Awesome icon font: " + iconFontPath.string());
+    }
 
     ImGui::StyleColorsDark();
 

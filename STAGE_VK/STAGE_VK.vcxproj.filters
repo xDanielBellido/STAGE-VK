@@ -189,5 +189,8 @@
     <ClInclude Include="Source\PerformancePanel.h">
       <Filter>Source\Editor</Filter>
     </ClInclude>
+    <ClInclude Include="Source\EditorIcons.h">
+      <Filter>Source\Editor</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
