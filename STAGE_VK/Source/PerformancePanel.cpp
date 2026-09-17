@@ -559,6 +559,50 @@ void PerformancePanel::DrawCpuHierarchy(const FrameProfileData& frame)
 void PerformancePanel::DrawGpuProfiler(const Profiler& profiler, const FrameProfileData& frame)
 {
     ImGui::Text("Frame #%llu", static_cast<unsigned long long>(frame.frameNumber));
+    const GpuDeviceProfileData& gpu = profiler.GetGpuDeviceInfo();
+
+    ImGui::Spacing();
+
+    ImGui::TextDisabled("DEVICE");
+
+    if (ImGui::BeginTable("GpuDeviceInfo", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchProp))
+    {
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::TextDisabled("GPU");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::TextUnformatted(gpu.name.c_str());
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::TextDisabled("Type");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::TextUnformatted(gpu.type.c_str());
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::TextDisabled("Vulkan API");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%u.%u.%u", gpu.apiMajor, gpu.apiMinor, gpu.apiPatch);
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::TextDisabled("Timestamp Queries");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::TextUnformatted(gpu.timestampSupported ? "Supported" : "Unsupported");
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::TextDisabled("Timestamp Period");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%.3f ns", gpu.timestampPeriodNs);
+
+        ImGui::EndTable();
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
 
     ImGui::Spacing();
 

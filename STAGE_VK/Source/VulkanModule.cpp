@@ -13,6 +13,18 @@
 
 namespace
 {
+    const char* GetPhysicalDeviceTypeName(VkPhysicalDeviceType type)
+    {
+        switch (type)
+        {
+        case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:   return "Discrete GPU";
+        case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU: return "Integrated GPU";
+        case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:    return "Virtual GPU";
+        case VK_PHYSICAL_DEVICE_TYPE_CPU:            return "CPU";
+        default:                                     return "Other";
+        }
+    }
+
     const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
 
 #ifdef _DEBUG
@@ -59,6 +71,19 @@ bool VulkanModule::Init()
     {
         return false;
     }
+
+    VkPhysicalDeviceProperties gpuProperties{};
+    vkGetPhysicalDeviceProperties(vulkanDevice.GetPhysicalDevice(), &gpuProperties);
+
+    app->GetProfiler().SetGpuDeviceInfo(
+        gpuProperties.deviceName,
+        GetPhysicalDeviceTypeName(gpuProperties.deviceType),
+        VK_VERSION_MAJOR(gpuProperties.apiVersion),
+        VK_VERSION_MINOR(gpuProperties.apiVersion),
+        VK_VERSION_PATCH(gpuProperties.apiVersion),
+        gpuProfiler.IsSupported(),
+        gpuProfiler.GetTimestampPeriod()
+    );
 
     // Create the synchronization objects required by the frame lifecycle.
     if (!frameContext.Init(vulkanDevice.GetDevice(), vulkanSwapchain.GetImageCount()))

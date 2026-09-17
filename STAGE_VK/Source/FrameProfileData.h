@@ -27,6 +27,19 @@ struct RenderingProfileData
     uint32_t presentCount = 0;
 };
 
+struct GpuDeviceProfileData
+{
+    std::string name;
+    std::string type;
+
+    uint32_t apiMajor = 0;
+    uint32_t apiMinor = 0;
+    uint32_t apiPatch = 0;
+
+    bool timestampSupported = false;
+    float timestampPeriodNs = 0.0f;
+};
+
 struct FrameProfileData
 {
     uint64_t frameNumber = 0;

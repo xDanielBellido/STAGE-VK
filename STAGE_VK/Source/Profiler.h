@@ -25,6 +25,7 @@ private:
     Clock::time_point frameStartTime{};
 
     FrameProfileData currentFrame;
+    GpuDeviceProfileData gpuDevice;
     std::deque<FrameProfileData> frameHistory;
 
 public:
@@ -38,6 +39,9 @@ public:
 
                                     // GPU Profiling
     void                            SetLatestGpuFrameTime(float gpuFrameTimeMs);
+
+    void                            SetGpuDeviceInfo(const char* name, const char* type, uint32_t apiMajor, uint32_t apiMinor, uint32_t apiPatch, bool timestampSupported, float timestampPeriodNs);
+    const GpuDeviceProfileData&     GetGpuDeviceInfo() const { return gpuDevice; }
 
                                     // Rendering Profiling
     void                            SetRenderingContext(uint32_t width, uint32_t height, uint32_t swapchainImageCount, uint32_t currentImageIndex, uint32_t commandBufferCount);

@@ -36,4 +36,5 @@ public:
 
     // State
     bool                        IsSupported() const { return supported; }
+    float                       GetTimestampPeriod() const { return timestampPeriod; }
 };

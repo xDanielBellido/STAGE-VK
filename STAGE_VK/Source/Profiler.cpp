@@ -85,6 +85,19 @@ void Profiler::SetLatestGpuFrameTime(float gpuFrameTimeMs)
     frameHistory.back().gpuFrameTimeMs = gpuFrameTimeMs;
 }
 
+void Profiler::SetGpuDeviceInfo(const char* name, const char* type, uint32_t apiMajor, uint32_t apiMinor, uint32_t apiPatch, bool timestampSupported, float timestampPeriodNs)
+{
+    gpuDevice.name = name;
+    gpuDevice.type = type;
+
+    gpuDevice.apiMajor = apiMajor;
+    gpuDevice.apiMinor = apiMinor;
+    gpuDevice.apiPatch = apiPatch;
+
+    gpuDevice.timestampSupported = timestampSupported;
+    gpuDevice.timestampPeriodNs = timestampPeriodNs;
+}
+
 void Profiler::SetRenderingContext(uint32_t width, uint32_t height, uint32_t swapchainImageCount, uint32_t currentImageIndex, uint32_t commandBufferCount)
 {
     if (!recording)
