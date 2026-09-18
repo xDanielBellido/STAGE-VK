@@ -32,6 +32,18 @@
     <Filter Include="Source\Passes">
       <UniqueIdentifier>{78e98ff1-417f-4d1d-8ab6-8f01b944c191}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Core\Logging">
+      <UniqueIdentifier>{9337d504-ff40-47e3-8ddb-c13c35c6a82d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Editor">
+      <UniqueIdentifier>{1ce98b29-3e6c-47d6-aca8-a31daa5e6639}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Editor\Console">
+      <UniqueIdentifier>{2101be7a-faec-4c87-85dc-a8dca17aeb13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Editor\Profiler">
+      <UniqueIdentifier>{ad6f17bc-c5fe-47ca-be6c-e844ed535ed8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\main.cpp">
@@ -87,6 +99,27 @@
     </ClCompile>
     <ClCompile Include="Source\EditorModule.cpp">
       <Filter>Source\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Log.cpp">
+      <Filter>Source\Core\Logging</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MemoryLogSink.cpp">
+      <Filter>Source\Core\Logging</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ConsolePanel.cpp">
+      <Filter>Source\Editor\Console</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\PerformancePanel.cpp">
+      <Filter>Source\Editor\Profiler</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Profiler.cpp">
+      <Filter>Source\Editor\Profiler</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\VulkanGpuProfiler.cpp">
+      <Filter>Source\Editor\Profiler</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\FramePacer.cpp">
+      <Filter>Source\Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -155,6 +188,39 @@
     </ClInclude>
     <ClInclude Include="Source\EditorModule.h">
       <Filter>Source\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Log.h">
+      <Filter>Source\Core\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\LogEntry.h">
+      <Filter>Source\Core\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\MemoryLogSink.h">
+      <Filter>Source\Core\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\EditorIcons.h">
+      <Filter>Source\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ConsolePanel.h">
+      <Filter>Source\Editor\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\PerformancePanel.h">
+      <Filter>Source\Editor\Profiler</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\FrameProfileData.h">
+      <Filter>Source\Editor\Profiler</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Profiler.h">
+      <Filter>Source\Editor\Profiler</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ProfileScope.h">
+      <Filter>Source\Editor\Profiler</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\VulkanGpuProfiler.h">
+      <Filter>Source\Editor\Profiler</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\FramePacer.h">
+      <Filter>Source\Core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

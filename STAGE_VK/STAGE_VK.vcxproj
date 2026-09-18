@@ -76,8 +76,9 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\External Libraries\Vulkan\Include;$(ProjectDir)\External Libraries\GLFW\include;$(ProjectDir)\External Libraries\glm;$(ProjectDir)\External Libraries\ImGui;$(ProjectDir)\External Libraries\ImGui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\External Libraries\spdlog\include;$(ProjectDir)\External Libraries\Vulkan\Include;$(ProjectDir)\External Libraries\GLFW\include;$(ProjectDir)\External Libraries\glm;$(ProjectDir)\External Libraries\ImGui;$(ProjectDir)\External Libraries\ImGui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -94,8 +95,9 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\External Libraries\Vulkan\Include;$(ProjectDir)\External Libraries\GLFW\include;$(ProjectDir)\External Libraries\glm;$(ProjectDir)\External Libraries\ImGui;$(ProjectDir)\External Libraries\ImGui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\External Libraries\spdlog\include;$(ProjectDir)\External Libraries\Vulkan\Include;$(ProjectDir)\External Libraries\GLFW\include;$(ProjectDir)\External Libraries\glm;$(ProjectDir)\External Libraries\ImGui;$(ProjectDir)\External Libraries\ImGui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -108,8 +110,9 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\External Libraries\Vulkan\Include;$(ProjectDir)\External Libraries\GLFW\include;$(ProjectDir)\External Libraries\glm;$(ProjectDir)\External Libraries\ImGui;$(ProjectDir)\External Libraries\ImGui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\External Libraries\spdlog\include;$(ProjectDir)\External Libraries\Vulkan\Include;$(ProjectDir)\External Libraries\GLFW\include;$(ProjectDir)\External Libraries\glm;$(ProjectDir)\External Libraries\ImGui;$(ProjectDir)\External Libraries\ImGui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -127,7 +130,8 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)\External Libraries\Vulkan\Include;$(ProjectDir)\External Libraries\GLFW\include;$(ProjectDir)\External Libraries\glm;$(ProjectDir)\External Libraries\ImGui;$(ProjectDir)\External Libraries\ImGui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\External Libraries\spdlog\include;$(ProjectDir)\External Libraries\Vulkan\Include;$(ProjectDir)\External Libraries\GLFW\include;$(ProjectDir)\External Libraries\glm;$(ProjectDir)\External Libraries\ImGui;$(ProjectDir)\External Libraries\ImGui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -145,13 +149,20 @@
     <ClCompile Include="External Libraries\ImGui\imgui_tables.cpp" />
     <ClCompile Include="External Libraries\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Source\Application.cpp" />
+    <ClCompile Include="Source\ConsolePanel.cpp" />
     <ClCompile Include="Source\EditorModule.cpp" />
     <ClCompile Include="Source\FrameContext.cpp" />
+    <ClCompile Include="Source\FramePacer.cpp" />
     <ClCompile Include="Source\ImGuiPass.cpp" />
+    <ClCompile Include="Source\Log.cpp" />
     <ClCompile Include="Source\main.cpp" />
+    <ClCompile Include="Source\MemoryLogSink.cpp" />
+    <ClCompile Include="Source\PerformancePanel.cpp" />
+    <ClCompile Include="Source\Profiler.cpp" />
     <ClCompile Include="Source\RenderModule.cpp" />
     <ClCompile Include="Source\VulkanCommandContext.cpp" />
     <ClCompile Include="Source\VulkanDevice.cpp" />
+    <ClCompile Include="Source\VulkanGpuProfiler.cpp" />
     <ClCompile Include="Source\VulkanModule.cpp" />
     <ClCompile Include="Source\VulkanSwapchain.cpp" />
     <ClCompile Include="Source\Window.cpp" />
@@ -167,15 +178,26 @@
     <ClInclude Include="External Libraries\ImGui\imstb_truetype.h" />
     <ClInclude Include="Source\AppConfig.h" />
     <ClInclude Include="Source\Application.h" />
+    <ClInclude Include="Source\ConsolePanel.h" />
+    <ClInclude Include="Source\EditorIcons.h" />
     <ClInclude Include="Source\EditorModule.h" />
     <ClInclude Include="Source\FrameContext.h" />
+    <ClInclude Include="Source\FramePacer.h" />
+    <ClInclude Include="Source\FrameProfileData.h" />
     <ClInclude Include="Source\Globals.h" />
     <ClInclude Include="Source\ImGuiPass.h" />
     <ClInclude Include="Source\IVulkanSwapchainListener.h" />
+    <ClInclude Include="Source\Log.h" />
+    <ClInclude Include="Source\LogEntry.h" />
+    <ClInclude Include="Source\MemoryLogSink.h" />
     <ClInclude Include="Source\Module.h" />
+    <ClInclude Include="Source\PerformancePanel.h" />
+    <ClInclude Include="Source\Profiler.h" />
+    <ClInclude Include="Source\ProfileScope.h" />
     <ClInclude Include="Source\RenderModule.h" />
     <ClInclude Include="Source\VulkanCommandContext.h" />
     <ClInclude Include="Source\VulkanDevice.h" />
+    <ClInclude Include="Source\VulkanGpuProfiler.h" />
     <ClInclude Include="Source\VulkanModule.h" />
     <ClInclude Include="Source\VulkanSwapchain.h" />
     <ClInclude Include="Source\Window.h" />

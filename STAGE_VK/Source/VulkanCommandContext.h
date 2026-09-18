@@ -21,6 +21,7 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+#include <vector>
 
 class VulkanCommandContext
 {
@@ -30,19 +31,20 @@ private:
 
                                     // Command Resources
     VkCommandPool                   commandPool = VK_NULL_HANDLE;
-    VkCommandBuffer                 commandBuffer = VK_NULL_HANDLE;
+    std::vector<VkCommandBuffer>    commandBuffers;
 
 public:
                                     // Command Context Lifetime
-    bool                            Init(VkDevice device, uint32_t graphicsQueueFamily);
+    bool                            Init(VkDevice device, uint32_t graphicsQueueFamily, uint32_t frameCount);
     void                            CleanUp();
 
                                     // Command Resources Access
     VkCommandPool                   GetCommandPool() const { return commandPool; }
-    VkCommandBuffer                 GetCommandBuffer() const { return commandBuffer; }
+    VkCommandBuffer                 GetCommandBuffer(uint32_t frameIndex) const { return commandBuffers[frameIndex]; }
+    uint32_t                        GetCommandBufferCount() const { return static_cast<uint32_t>(commandBuffers.size()); }
 
 private:
                                     // Command Resource Creation
     void                            CreateCommandPool(uint32_t graphicsQueueFamily);
-    void                            AllocateCommandBuffer();
+    void                            AllocateCommandBuffers(uint32_t frameCount);
 };

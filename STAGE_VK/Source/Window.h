@@ -44,6 +44,9 @@ public:
     // Framebuffer Info
     void GetFramebufferSize(int& width, int& height) const;
 
+    // Monitor Info
+    int GetCurrentMonitorRefreshRate() const;
+
     // Resize State
     bool WasResized() const { return framebufferResized; }
     void ResetResizedFlag() { framebufferResized = false; }

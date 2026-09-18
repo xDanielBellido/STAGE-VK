@@ -1,5 +1,6 @@
 #include "Globals.h"
 #include "Application.h"
+#include "ProfileScope.h"
 
 #include "Module.h"
 #include "Window.h"
@@ -53,7 +54,7 @@ bool Application::Init()
 
 void Application::Update()
 {
-    window->PollEvents();
+    framePacer.BeginFrame();
 
     const auto now = Clock::now();
     deltaTime = std::chrono::duration<float>(now - lastFrameTime).count();
@@ -64,45 +65,82 @@ void Application::Update()
         fps = 1.0f / deltaTime;
     }
 
-    int framebufferWidth = 0;
-    int framebufferHeight = 0;
-    window->GetFramebufferSize(framebufferWidth, framebufferHeight);
+    profiler.FinalizePreviousFrameTiming(deltaTime, fps);
+    profiler.BeginFrame();
 
-    paused = (framebufferWidth == 0 || framebufferHeight == 0);
-
-    if (window->WasResized() && !paused)
     {
-        for (auto& module : modules)
+        PROFILE_SCOPE(profiler, "Frame");
+
         {
-            module->OnResize(framebufferWidth, framebufferHeight);
+            PROFILE_SCOPE(profiler, "PollEvents");
+            window->PollEvents();
         }
 
-        window->ResetResizedFlag();
+        {
+            PROFILE_SCOPE(profiler, "Window");
+
+            int framebufferWidth = 0;
+            int framebufferHeight = 0;
+            window->GetFramebufferSize(framebufferWidth, framebufferHeight);
+
+            paused = (framebufferWidth == 0 || framebufferHeight == 0);
+
+            if (window->WasResized() && !paused)
+            {
+                for (auto& module : modules)
+                {
+                    module->OnResize(framebufferWidth, framebufferHeight);
+                }
+
+                window->ResetResizedFlag();
+            }
+        }
+
+        if (!paused)
+        {
+            {
+                PROFILE_SCOPE(profiler, "Update");
+
+                for (auto& module : modules)
+                {
+                    module->Update();
+                }
+            }
+
+            {
+                PROFILE_SCOPE(profiler, "PreRender");
+
+                for (auto& module : modules)
+                {
+                    module->PreRender();
+                }
+            }
+
+            {
+                PROFILE_SCOPE(profiler, "Render");
+
+                for (auto& module : modules)
+                {
+                    module->Render();
+                }
+            }
+
+            {
+                PROFILE_SCOPE(profiler, "PostRender");
+
+                for (auto it = modules.rbegin(); it != modules.rend(); ++it)
+                {
+                    (*it)->PostRender();
+                }
+            }
+        }
     }
 
-    if (paused)
-    {
-        return;
-    }
+    profiler.EndFrame();
 
-    for (auto& module : modules)
+    if (!paused)
     {
-        module->Update();
-    }
-
-    for (auto& module : modules)
-    {
-        module->PreRender();
-    }
-
-    for (auto& module : modules)
-    {
-        module->Render();
-    }
-
-    for (auto it = modules.rbegin(); it != modules.rend(); ++it)
-    {
-        (*it)->PostRender();
+        framePacer.WaitForRefreshRate(window->GetCurrentMonitorRefreshRate());
     }
 }
 

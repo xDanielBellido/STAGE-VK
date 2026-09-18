@@ -1,18 +1,30 @@
 #include "Globals.h"
 #include "VulkanModule.h"
-
+#include "Log.h"
 #include "Application.h"
 #include "Window.h"
+#include "ProfileScope.h"
 
 #include <GLFW/glfw3.h>
 
 #include <stdexcept>
 #include <cstring>
-#include <iostream>
 #include <algorithm>
 
 namespace
 {
+    const char* GetPhysicalDeviceTypeName(VkPhysicalDeviceType type)
+    {
+        switch (type)
+        {
+        case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:   return "Discrete GPU";
+        case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU: return "Integrated GPU";
+        case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:    return "Virtual GPU";
+        case VK_PHYSICAL_DEVICE_TYPE_CPU:            return "CPU";
+        default:                                     return "Other";
+        }
+    }
+
     const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
 
 #ifdef _DEBUG
@@ -50,13 +62,31 @@ bool VulkanModule::Init()
     }
 
     // Create the command pool and primary command buffer used to record frames.
-    if (!commandContext.Init(vulkanDevice.GetDevice(), vulkanDevice.GetQueueFamilies().graphicsFamily.value()))
+    if (!commandContext.Init(vulkanDevice.GetDevice(), vulkanDevice.GetQueueFamilies().graphicsFamily.value(), MAX_FRAMES_IN_FLIGHT))
     {
         return false;
     }
 
+    if (!gpuProfiler.Init(vulkanDevice.GetPhysicalDevice(), vulkanDevice.GetDevice(), vulkanDevice.GetQueueFamilies().graphicsFamily.value(), MAX_FRAMES_IN_FLIGHT))
+    {
+        return false;
+    }
+
+    VkPhysicalDeviceProperties gpuProperties{};
+    vkGetPhysicalDeviceProperties(vulkanDevice.GetPhysicalDevice(), &gpuProperties);
+
+    app->GetProfiler().SetGpuDeviceInfo(
+        gpuProperties.deviceName,
+        GetPhysicalDeviceTypeName(gpuProperties.deviceType),
+        VK_VERSION_MAJOR(gpuProperties.apiVersion),
+        VK_VERSION_MINOR(gpuProperties.apiVersion),
+        VK_VERSION_PATCH(gpuProperties.apiVersion),
+        gpuProfiler.IsSupported(),
+        gpuProfiler.GetTimestampPeriod()
+    );
+
     // Create the synchronization objects required by the frame lifecycle.
-    if (!frameContext.Init(vulkanDevice.GetDevice(), vulkanSwapchain.GetImageCount()))
+    if (!frameContext.Init(vulkanDevice.GetDevice(), vulkanSwapchain.GetImageCount(), MAX_FRAMES_IN_FLIGHT))
     {
         return false;
     }
@@ -66,13 +96,12 @@ bool VulkanModule::Init()
 
 void VulkanModule::PreRender()
 {
-    // Rebuild the swapchain before starting a new frame if the previous frame
-    // or a resize event marked it as invalid.
+    PROFILE_SCOPE(app->GetProfiler(), "VulkanModule::PreRender");
+
     if (swapchainNeedsRecreation)
     {
         RecreateSwapchain();
 
-        // RecreateSwapchain() cannot rebuild a 0x0 framebuffer while minimized.
         if (swapchainNeedsRecreation)
         {
             return;
@@ -80,14 +109,21 @@ void VulkanModule::PreRender()
     }
 
     VkDevice device = vulkanDevice.GetDevice();
-    VkFence inFlightFence = frameContext.GetInFlightFence();
+    VkFence inFlightFence = frameContext.GetInFlightFence(currentFrameSlot);
 
-    // The current implementation reuses one command buffer, so the CPU must
-    // wait until the GPU has finished the previous submitted frame.
-    vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
+    {
+        PROFILE_SCOPE(app->GetProfiler(), "WaitForPreviousFrame");
+        vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
+    }
 
-    // Acquire one presentable image from the swapchain.
-    VkResult result = vkAcquireNextImageKHR(device, vulkanSwapchain.GetSwapchain(), UINT64_MAX, frameContext.GetImageAvailableSemaphore(), VK_NULL_HANDLE, &currentImageIndex);
+    gpuProfiler.ResolveFrame(currentFrameSlot, app->GetProfiler());
+
+    VkResult result = VK_SUCCESS;
+
+    {
+        PROFILE_SCOPE(app->GetProfiler(), "AcquireSwapchainImage");
+        result = vkAcquireNextImageKHR(device, vulkanSwapchain.GetSwapchain(), UINT64_MAX, frameContext.GetImageAvailableSemaphore(currentFrameSlot), VK_NULL_HANDLE, &currentImageIndex);
+    }
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR)
     {
@@ -96,8 +132,6 @@ void VulkanModule::PreRender()
         return;
     }
 
-    // A suboptimal swapchain can still be used for this frame, but should be
-    // recreated afterwards.
     if (result == VK_SUBOPTIMAL_KHR)
     {
         swapchainNeedsRecreation = true;
@@ -107,54 +141,64 @@ void VulkanModule::PreRender()
         throw std::runtime_error("Failed to acquire Vulkan swapchain image.");
     }
 
-    // The fence is reset only after an image was successfully acquired.
-    // It will be signaled again when this frame's GPU submission completes.
     vkResetFences(device, 1, &inFlightFence);
 
-    VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer();
+    VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer(currentFrameSlot);
 
-    // Reuse the primary command buffer for the new frame.
-    if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to reset Vulkan command buffer.");
+        PROFILE_SCOPE(app->GetProfiler(), "BeginCommandBuffer");
+
+        if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to reset Vulkan command buffer.");
+        }
+
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+        if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to begin recording Vulkan command buffer.");
+        }
     }
 
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-    // VulkanModule begins recording, but deliberately leaves the command
-    // buffer open so RenderModule can record the actual rendering work.
-    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+    if (app->GetProfiler().IsRecording())
     {
-        throw std::runtime_error("Failed to begin recording Vulkan command buffer.");
+        gpuProfiler.BeginFrame(commandBuffer, currentFrameSlot, app->GetProfiler().GetCurrentFrame().frameNumber);
     }
+
+    const VkExtent2D extent = vulkanSwapchain.GetExtent();
+
+    app->GetProfiler().SetRenderingContext(extent.width, extent.height, vulkanSwapchain.GetImageCount(), currentImageIndex, commandContext.GetCommandBufferCount());
 
     frameReady = true;
 }
 
 void VulkanModule::PostRender()
 {
-    // If image acquisition failed or the swapchain could not be recreated,
-    // there is no valid frame to submit.
+    PROFILE_SCOPE(app->GetProfiler(), "VulkanModule::PostRender");
+
     if (!frameReady)
     {
         return;
     }
 
-    VkSemaphore imageAvailableSemaphore = frameContext.GetImageAvailableSemaphore();
+    VkSemaphore imageAvailableSemaphore = frameContext.GetImageAvailableSemaphore(currentFrameSlot);
     VkSemaphore renderFinishedSemaphore = frameContext.GetRenderFinishedSemaphore(currentImageIndex);
-    VkFence inFlightFence = frameContext.GetInFlightFence();
-    VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer();
+    VkFence inFlightFence = frameContext.GetInFlightFence(currentFrameSlot);
+    VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer(currentFrameSlot);
 
-    // RenderModule has finished recording its work, so command-buffer
-    // recording can now be closed.
-    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+    gpuProfiler.EndFrame(commandBuffer, currentFrameSlot);
+
     {
-        throw std::runtime_error("Failed to end Vulkan command buffer.");
+        PROFILE_SCOPE(app->GetProfiler(), "EndCommandBuffer");
+
+        if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to end Vulkan command buffer.");
+        }
     }
 
-    // The graphics submission must wait until the acquired swapchain image is
-    // available before writing to its colour attachment.
     VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
     VkSubmitInfo submitInfo{};
@@ -167,12 +211,18 @@ void VulkanModule::PostRender()
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
 
-    // Submitting the command buffer starts GPU execution.
-    // The fence signals CPU completion and the semaphore signals presentation.
-    if (vkQueueSubmit(vulkanDevice.GetGraphicsQueue(), 1, &submitInfo, inFlightFence) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to submit Vulkan command buffer.");
+        PROFILE_SCOPE(app->GetProfiler(), "QueueSubmit");
+
+        if (vkQueueSubmit(vulkanDevice.GetGraphicsQueue(), 1, &submitInfo, inFlightFence) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to submit Vulkan command buffer.");
+        }
     }
+
+    app->GetProfiler().RecordQueueSubmission();
+
+    gpuProfiler.MarkSubmitted(currentFrameSlot);
 
     VkSwapchainKHR swapchain = vulkanSwapchain.GetSwapchain();
 
@@ -184,8 +234,14 @@ void VulkanModule::PostRender()
     presentInfo.pSwapchains = &swapchain;
     presentInfo.pImageIndices = &currentImageIndex;
 
-    // Presentation waits until rendering involving this image has completed.
-    VkResult result = vkQueuePresentKHR(vulkanDevice.GetPresentQueue(), &presentInfo);
+    VkResult result = VK_SUCCESS;
+
+    {
+        PROFILE_SCOPE(app->GetProfiler(), "Present");
+        result = vkQueuePresentKHR(vulkanDevice.GetPresentQueue(), &presentInfo);
+    }
+
+    app->GetProfiler().RecordPresent();
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
     {
@@ -197,6 +253,7 @@ void VulkanModule::PostRender()
     }
 
     frameReady = false;
+    currentFrameSlot = (currentFrameSlot + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 void VulkanModule::OnResize(int width, int height)
@@ -215,6 +272,7 @@ bool VulkanModule::CleanUp()
     vulkanDevice.WaitIdle();
 
     // Destroy resources in reverse dependency order.
+    gpuProfiler.CleanUp();
     frameContext.CleanUp();
     commandContext.CleanUp();
     vulkanSwapchain.CleanUp();
@@ -278,7 +336,7 @@ void VulkanModule::RecreateSwapchain()
 
     // Synchronization is recreated because the number of swapchain images may
     // have changed.
-    if (!frameContext.Init(vulkanDevice.GetDevice(), vulkanSwapchain.GetImageCount()))
+    if (!frameContext.Init(vulkanDevice.GetDevice(), vulkanSwapchain.GetImageCount(), MAX_FRAMES_IN_FLIGHT))
     {
         throw std::runtime_error("Failed to recreate Vulkan frame synchronization.");
     }
@@ -293,6 +351,7 @@ void VulkanModule::RecreateSwapchain()
     }
 
     currentImageIndex = 0;
+    currentFrameSlot = 0;
     frameReady = false;
     swapchainNeedsRecreation = false;
 }
@@ -472,9 +531,23 @@ void VulkanModule::DestroyDebugMessenger()
 
 VKAPI_ATTR VkBool32 VKAPI_CALL VulkanModule::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void* userData)
 {
-    std::cerr << "[Vulkan Validation] " << callbackData->pMessage << '\n';
+    if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+    {
+        LOG_ERROR("[Vulkan Validation] {}", callbackData->pMessage);
+    }
+    else if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+    {
+        LOG_WARN("[Vulkan Validation] {}", callbackData->pMessage);
+    }
+    else if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)
+    {
+        LOG_INFO("[Vulkan Validation] {}", callbackData->pMessage);
+    }
+    else
+    {
+        LOG_TRACE("[Vulkan Validation] {}", callbackData->pMessage);
+    }
 
-    // Returning VK_FALSE tells Vulkan that execution should continue normally.
     return VK_FALSE;
 }
 

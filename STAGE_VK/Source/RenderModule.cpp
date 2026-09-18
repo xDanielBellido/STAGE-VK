@@ -4,6 +4,8 @@
 #include "Globals.h"
 #include "Application.h"
 #include "Window.h"
+#include "Log.h"
+#include "ProfileScope.h"
 
 #include <stdexcept>
 
@@ -39,6 +41,8 @@ bool RenderModule::Init()
 
 void RenderModule::PreRender()
 {
+    PROFILE_SCOPE(app->GetProfiler(), "RenderModule::PreRender");
+
     frameActive = false;
 
     if (!vulkanModule.IsFrameReady())
@@ -52,6 +56,8 @@ void RenderModule::PreRender()
 
 void RenderModule::Render()
 {
+    PROFILE_SCOPE(app->GetProfiler(), "RenderModule::PostRender");
+
     if (!vulkanModule.IsFrameReady())
     {
         return;
@@ -74,6 +80,8 @@ void RenderModule::Render()
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+    app->GetProfiler().RecordRenderPass();
+
     renderPassOpen = true;
 }
 
@@ -86,7 +94,10 @@ void RenderModule::PostRender()
 
     VkCommandBuffer commandBuffer = vulkanModule.GetCommandBuffer();
 
-    imguiPass.Record(commandBuffer);
+    {
+        PROFILE_SCOPE(app->GetProfiler(), "ImGuiPass::Record");
+        imguiPass.Record(commandBuffer);
+    }
 
     vkCmdEndRenderPass(commandBuffer);
 

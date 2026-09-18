@@ -1,0 +1,66 @@
+#pragma once
+
+#include "FrameProfileData.h"
+
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <deque>
+#include <limits>
+
+class Profiler
+{
+private:
+    using Clock = std::chrono::steady_clock;
+
+    static constexpr std::size_t MAX_FRAME_HISTORY = 240;
+    static constexpr std::size_t INVALID_EVENT_INDEX = std::numeric_limits<std::size_t>::max();
+
+    bool recording = true;
+    bool recordingRequested = true;
+    bool pendingFrameTiming = false;
+
+    uint64_t nextFrameNumber = 0;
+    uint32_t currentCpuDepth = 0;
+
+    Clock::time_point frameStartTime{};
+
+    FrameProfileData currentFrame;
+    GpuDeviceProfileData gpuDevice;
+    std::deque<FrameProfileData> frameHistory;
+
+public:
+                                    // Frame Recording
+    void                            FinalizePreviousFrameTiming(float deltaTimeSeconds, float fps);
+    void                            BeginFrame();
+    void                            EndFrame();
+
+                                    // CPU Profiling
+    std::size_t                     BeginCpuEvent(const char* name);
+    void                            EndCpuEvent(std::size_t eventIndex);
+
+                                    // GPU Profilin
+    void                            SetGpuFrameTime(uint64_t frameNumber, float gpuFrameTimeMs);
+
+    void                            SetGpuDeviceInfo(const char* name, const char* type, uint32_t apiMajor, uint32_t apiMinor, uint32_t apiPatch, bool timestampSupported, float timestampPeriodNs);
+    const GpuDeviceProfileData&     GetGpuDeviceInfo() const { return gpuDevice; }
+
+                                    // Rendering Profiling
+    void                            SetRenderingContext(uint32_t width, uint32_t height, uint32_t swapchainImageCount, uint32_t currentImageIndex, uint32_t commandBufferCount);
+    void                            RecordRenderPass();
+    void                            RecordQueueSubmission();
+    void                            RecordPresent();
+
+                                    // Recording Control
+    void                            StartRecording();
+    void                            StopRecording();
+    void                            Clear();
+
+                                    // State
+    bool                            IsRecording() const { return recordingRequested; }
+
+                                    // Frame Data
+    const FrameProfileData&         GetCurrentFrame() const { return currentFrame; }
+    const FrameProfileData&         GetLatestFrame() const { return frameHistory.empty() ? currentFrame : frameHistory.back(); }
+    const std::deque<FrameProfileData>& GetFrameHistory() const { return frameHistory; }
+};

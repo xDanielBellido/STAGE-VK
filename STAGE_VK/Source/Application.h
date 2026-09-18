@@ -24,6 +24,8 @@
 #pragma once
 
 #include "AppConfig.h"
+#include "Profiler.h"
+#include "FramePacer.h"
 
 #include <memory>
 #include <vector>
@@ -39,6 +41,8 @@ class Application
 {
 private:
     AppConfig config;
+    Profiler profiler;
+    FramePacer framePacer;
 
     std::unique_ptr<Window> window;
     std::vector<Module*> modules;
@@ -52,7 +56,7 @@ private:
     float deltaTime = 0.0f;
     float fps = 0.0f;
 
-    using Clock = std::chrono::high_resolution_clock;
+    using Clock = std::chrono::steady_clock;
     Clock::time_point lastFrameTime;
 
 public:
@@ -75,6 +79,10 @@ public:
     const RenderModule&     GetRenderModule() const { return *renderModule; }
     EditorModule&           GetEditorModule() { return *editorModule; }
     const EditorModule&     GetEditorModule() const { return *editorModule; }
+
+                            // Profiler
+    Profiler&               GetProfiler() { return profiler; }
+    const Profiler&         GetProfiler() const { return profiler; }
 
                             // Frame Info
     float                   GetDeltaTime() const { return deltaTime; }

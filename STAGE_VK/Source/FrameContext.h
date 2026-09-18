@@ -26,7 +26,6 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-
 #include <vector>
 
 class FrameContext
@@ -36,17 +35,17 @@ private:
     VkDevice                        device = VK_NULL_HANDLE;
 
                                     // Frame Synchronization
-    VkSemaphore                     imageAvailableSemaphore = VK_NULL_HANDLE;
+    std::vector<VkSemaphore>        imageAvailableSemaphores;
     std::vector<VkSemaphore>        renderFinishedSemaphores;
-    VkFence                         inFlightFence = VK_NULL_HANDLE;
+    std::vector<VkFence>            inFlightFences;
 
 public:
                                     // Frame Context Lifetime
-    bool                            Init(VkDevice device, uint32_t swapchainImageCount);
+    bool                            Init(VkDevice device, uint32_t swapchainImageCount, uint32_t frameCount);
     void                            CleanUp();
 
                                     // Synchronization Access
-    VkSemaphore                     GetImageAvailableSemaphore() const { return imageAvailableSemaphore; }
+    VkSemaphore                     GetImageAvailableSemaphore(uint32_t frameIndex) const { return imageAvailableSemaphores[frameIndex]; }
     VkSemaphore                     GetRenderFinishedSemaphore(uint32_t imageIndex) const { return renderFinishedSemaphores[imageIndex]; }
-    VkFence                         GetInFlightFence() const { return inFlightFence; }
+    VkFence                         GetInFlightFence(uint32_t frameIndex) const { return inFlightFences[frameIndex]; }
 };

@@ -1,5 +1,8 @@
+#include "Globals.h"
+#include "Application.h"
 #include "EditorModule.h"
 #include "RenderModule.h"
+#include "ProfileScope.h"
 
 #include "imgui.h"
 
@@ -9,6 +12,8 @@ EditorModule::EditorModule(RenderModule& renderModule) : renderModule(renderModu
 
 void EditorModule::Render()
 {
+    PROFILE_SCOPE(app->GetProfiler(), "EditorModule::Render");
+
     if (!renderModule.IsFrameActive())
     {
         return;
@@ -23,9 +28,16 @@ void EditorModule::Render()
         //ImGui::DockSpaceOverViewport();
     }
 
-    if (showDemoWindow)
+    // Draw panels and windows here:
+
+    if (showConsole)
     {
-        ImGui::ShowDemoWindow(&showDemoWindow);
+        consolePanel.Draw(&showConsole);
+    }
+
+    if (showPerformance)
+    {
+        performancePanel.Draw(app->GetProfiler(), &showPerformance);
     }
 }
 
@@ -35,10 +47,13 @@ void EditorModule::DrawMainMenu()
     {
         return;
     }
-
+ 
     if (ImGui::BeginMenu("Window"))
     {
-        ImGui::MenuItem("Dear ImGui Demo", nullptr, &showDemoWindow);
+        // Add menu options here:
+
+        ImGui::MenuItem("Console", nullptr, &showConsole);
+        ImGui::MenuItem("Performance", nullptr, &showPerformance);
 
         ImGui::EndMenu();
     }
