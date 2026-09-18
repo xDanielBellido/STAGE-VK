@@ -246,11 +246,59 @@ void PerformancePanel::DrawToolbar(Profiler& profiler)
 
     if (selectedFrame)
     {
+        const auto& history = profiler.GetFrameHistory();
+
+        std::size_t selectedIndex = history.size();
+
+        for (std::size_t i = 0; i < history.size(); ++i)
+        {
+            if (history[i].frameNumber == selectedFrame->frameNumber)
+            {
+                selectedIndex = i;
+                break;
+            }
+        }
+
+        const bool canGoPrevious = selectedIndex < history.size() && selectedIndex > 0;
+        const bool canGoNext = selectedIndex < history.size() && selectedIndex + 1 < history.size();
+
         ImGui::SameLine();
 
         if (ImGui::Button("Live"))
         {
             selectedFrame.reset();
+        }
+
+        ImGui::SameLine();
+
+        ImGui::BeginDisabled(!canGoPrevious);
+
+        if (ImGui::ArrowButton("##PreviousFrame", ImGuiDir_Left))
+        {
+            SelectAdjacentFrame(profiler, -1);
+        }
+
+        ImGui::EndDisabled();
+
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        {
+            ImGui::SetTooltip("Previous frame");
+        }
+
+        ImGui::SameLine();
+
+        ImGui::BeginDisabled(!canGoNext);
+
+        if (ImGui::ArrowButton("##NextFrame", ImGuiDir_Right))
+        {
+            SelectAdjacentFrame(profiler, 1);
+        }
+
+        ImGui::EndDisabled();
+
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        {
+            ImGui::SetTooltip("Next frame");
         }
     }
 
@@ -519,6 +567,9 @@ void PerformancePanel::DrawOverview(const Profiler& profiler, const FrameProfile
 
 void PerformancePanel::DrawCpuHierarchy(const FrameProfileData& frame)
 {
+    ImGui::Text("Frame #%llu", static_cast<unsigned long long>(frame.frameNumber));
+    ImGui::Spacing();
+
     if (frame.cpuEvents.empty())
     {
         ImGui::TextDisabled("No CPU profiling events available.");
@@ -744,4 +795,31 @@ void PerformancePanel::DrawRendering(const FrameProfileData& frame)
 
     ImGui::TextDisabled("SCENE STATISTICS");
     ImGui::TextDisabled("Draw calls, vertices and triangles are not tracked yet.");
+}
+
+void PerformancePanel::SelectAdjacentFrame(const Profiler& profiler, int direction)
+{
+    if (!selectedFrame || direction == 0)
+    {
+        return;
+    }
+
+    const auto& history = profiler.GetFrameHistory();
+
+    for (std::size_t i = 0; i < history.size(); ++i)
+    {
+        if (history[i].frameNumber != selectedFrame->frameNumber)
+        {
+            continue;
+        }
+
+        const int nextIndex = static_cast<int>(i) + direction;
+
+        if (nextIndex >= 0 && nextIndex < static_cast<int>(history.size()))
+        {
+            selectedFrame = history[static_cast<std::size_t>(nextIndex)];
+        }
+
+        return;
+    }
 }

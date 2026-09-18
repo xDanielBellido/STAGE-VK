@@ -41,6 +41,7 @@ public:
                                     // Command Resources Access
     VkCommandPool                   GetCommandPool() const { return commandPool; }
     VkCommandBuffer                 GetCommandBuffer(uint32_t frameIndex) const { return commandBuffers[frameIndex]; }
+    uint32_t                        GetCommandBufferCount() const { return static_cast<uint32_t>(commandBuffers.size()); }
 
 private:
                                     // Command Resource Creation

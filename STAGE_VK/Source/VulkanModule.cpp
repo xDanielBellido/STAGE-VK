@@ -169,7 +169,7 @@ void VulkanModule::PreRender()
 
     const VkExtent2D extent = vulkanSwapchain.GetExtent();
 
-    app->GetProfiler().SetRenderingContext(extent.width, extent.height, vulkanSwapchain.GetImageCount(), currentImageIndex, 1);
+    app->GetProfiler().SetRenderingContext(extent.width, extent.height, vulkanSwapchain.GetImageCount(), currentImageIndex, commandContext.GetCommandBufferCount());
 
     frameReady = true;
 }

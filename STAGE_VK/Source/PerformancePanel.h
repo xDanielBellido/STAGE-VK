@@ -21,6 +21,8 @@ private:
     void DrawGpuProfiler(const Profiler& profiler, const FrameProfileData& frame);
     void DrawRendering(const FrameProfileData& frame);
 
+    void SelectAdjacentFrame(const Profiler& profiler, int direction);
+
 private:
     std::optional<FrameProfileData> selectedFrame;
 };
