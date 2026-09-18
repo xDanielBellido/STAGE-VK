@@ -152,6 +152,7 @@
     <ClCompile Include="Source\ConsolePanel.cpp" />
     <ClCompile Include="Source\EditorModule.cpp" />
     <ClCompile Include="Source\FrameContext.cpp" />
+    <ClCompile Include="Source\FramePacer.cpp" />
     <ClCompile Include="Source\ImGuiPass.cpp" />
     <ClCompile Include="Source\Log.cpp" />
     <ClCompile Include="Source\main.cpp" />
@@ -181,6 +182,7 @@
     <ClInclude Include="Source\EditorIcons.h" />
     <ClInclude Include="Source\EditorModule.h" />
     <ClInclude Include="Source\FrameContext.h" />
+    <ClInclude Include="Source\FramePacer.h" />
     <ClInclude Include="Source\FrameProfileData.h" />
     <ClInclude Include="Source\Globals.h" />
     <ClInclude Include="Source\ImGuiPass.h" />

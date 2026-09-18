@@ -54,6 +54,8 @@ bool Application::Init()
 
 void Application::Update()
 {
+    framePacer.BeginFrame();
+
     const auto now = Clock::now();
     deltaTime = std::chrono::duration<float>(now - lastFrameTime).count();
     lastFrameTime = now;
@@ -135,6 +137,11 @@ void Application::Update()
     }
 
     profiler.EndFrame();
+
+    if (!paused)
+    {
+        framePacer.WaitForRefreshRate(window->GetCurrentMonitorRefreshRate());
+    }
 }
 
 bool Application::CleanUp()

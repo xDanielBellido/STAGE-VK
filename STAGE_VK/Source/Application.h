@@ -25,6 +25,7 @@
 
 #include "AppConfig.h"
 #include "Profiler.h"
+#include "FramePacer.h"
 
 #include <memory>
 #include <vector>
@@ -41,6 +42,7 @@ class Application
 private:
     AppConfig config;
     Profiler profiler;
+    FramePacer framePacer;
 
     std::unique_ptr<Window> window;
     std::vector<Module*> modules;

@@ -1,6 +1,7 @@
 #include "Window.h"
 
 #include <stdexcept>
+#include <algorithm>
 
 Window::Window(const std::string& title, int width, int height, bool resizable)
 {
@@ -47,6 +48,56 @@ bool Window::ShouldClose() const
 void Window::GetFramebufferSize(int& width, int& height) const
 {
     glfwGetFramebufferSize(window, &width, &height);
+}
+
+int Window::GetCurrentMonitorRefreshRate() const
+{
+    GLFWmonitor* currentMonitor = glfwGetWindowMonitor(window);
+
+    if (!currentMonitor)
+    {
+        int windowX = 0;
+        int windowY = 0;
+        int windowWidth = 0;
+        int windowHeight = 0;
+
+        glfwGetWindowPos(window, &windowX, &windowY);
+        glfwGetWindowSize(window, &windowWidth, &windowHeight);
+
+        int monitorCount = 0;
+        GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+
+        int bestOverlap = 0;
+
+        for (int i = 0; i < monitorCount; ++i)
+        {
+            int monitorX = 0;
+            int monitorY = 0;
+            int monitorWidth = 0;
+            int monitorHeight = 0;
+
+            glfwGetMonitorWorkarea(monitors[i], &monitorX, &monitorY, &monitorWidth, &monitorHeight);
+
+            const int overlapWidth = std::max(0, std::min(windowX + windowWidth, monitorX + monitorWidth) - std::max(windowX, monitorX));
+            const int overlapHeight = std::max(0, std::min(windowY + windowHeight, monitorY + monitorHeight) - std::max(windowY, monitorY));
+            const int overlapArea = overlapWidth * overlapHeight;
+
+            if (overlapArea > bestOverlap)
+            {
+                bestOverlap = overlapArea;
+                currentMonitor = monitors[i];
+            }
+        }
+    }
+
+    if (!currentMonitor)
+    {
+        currentMonitor = glfwGetPrimaryMonitor();
+    }
+
+    const GLFWvidmode* videoMode = glfwGetVideoMode(currentMonitor);
+
+    return videoMode ? videoMode->refreshRate : 0;
 }
 
 void Window::FramebufferResizeCallback(GLFWwindow* window, int width, int height)

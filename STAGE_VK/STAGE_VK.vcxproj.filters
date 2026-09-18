@@ -118,6 +118,9 @@
     <ClCompile Include="Source\VulkanGpuProfiler.cpp">
       <Filter>Source\Editor\Profiler</Filter>
     </ClCompile>
+    <ClCompile Include="Source\FramePacer.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Globals.h">
@@ -215,6 +218,9 @@
     </ClInclude>
     <ClInclude Include="Source\VulkanGpuProfiler.h">
       <Filter>Source\Editor\Profiler</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\FramePacer.h">
+      <Filter>Source\Core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
