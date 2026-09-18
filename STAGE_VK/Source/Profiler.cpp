@@ -86,14 +86,16 @@ void Profiler::EndCpuEvent(std::size_t eventIndex)
     }
 }
 
-void Profiler::SetLatestGpuFrameTime(float gpuFrameTimeMs)
+void Profiler::SetGpuFrameTime(uint64_t frameNumber, float gpuFrameTimeMs)
 {
-    if (frameHistory.empty())
+    for (auto it = frameHistory.rbegin(); it != frameHistory.rend(); ++it)
     {
-        return;
+        if (it->frameNumber == frameNumber)
+        {
+            it->gpuFrameTimeMs = gpuFrameTimeMs;
+            return;
+        }
     }
-
-    frameHistory.back().gpuFrameTimeMs = gpuFrameTimeMs;
 }
 
 void Profiler::SetGpuDeviceInfo(const char* name, const char* type, uint32_t apiMajor, uint32_t apiMinor, uint32_t apiPatch, bool timestampSupported, float timestampPeriodNs)

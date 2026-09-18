@@ -2,12 +2,12 @@
 
 #include <stdexcept>
 
-bool VulkanCommandContext::Init(VkDevice device, uint32_t graphicsQueueFamily)
+bool VulkanCommandContext::Init(VkDevice device, uint32_t graphicsQueueFamily, uint32_t frameCount)
 {
     this->device = device;
 
     CreateCommandPool(graphicsQueueFamily);
-    AllocateCommandBuffer();
+    AllocateCommandBuffers(frameCount);
 
     return true;
 }
@@ -20,7 +20,7 @@ void VulkanCommandContext::CleanUp()
         commandPool = VK_NULL_HANDLE;
     }
 
-    commandBuffer = VK_NULL_HANDLE;
+    commandBuffers.clear();
     device = VK_NULL_HANDLE;
 }
 
@@ -41,19 +41,18 @@ void VulkanCommandContext::CreateCommandPool(uint32_t graphicsQueueFamily)
     }
 }
 
-void VulkanCommandContext::AllocateCommandBuffer()
+void VulkanCommandContext::AllocateCommandBuffers(uint32_t frameCount)
 {
-    // A command buffer stores GPU commands while they are being recorded.
-    // PRIMARY command buffers can be submitted directly to a Vulkan queue.
+    commandBuffers.resize(frameCount, VK_NULL_HANDLE);
 
     VkCommandBufferAllocateInfo allocateInfo{};
     allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocateInfo.commandPool = commandPool;
     allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocateInfo.commandBufferCount = 1;
+    allocateInfo.commandBufferCount = frameCount;
 
-    if (vkAllocateCommandBuffers(device, &allocateInfo, &commandBuffer) != VK_SUCCESS)
+    if (vkAllocateCommandBuffers(device, &allocateInfo, commandBuffers.data()) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to allocate Vulkan command buffer.");
+        throw std::runtime_error("Failed to allocate Vulkan command buffers.");
     }
 }

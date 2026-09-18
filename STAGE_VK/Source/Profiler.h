@@ -39,8 +39,8 @@ public:
     std::size_t                     BeginCpuEvent(const char* name);
     void                            EndCpuEvent(std::size_t eventIndex);
 
-                                    // GPU Profiling
-    void                            SetLatestGpuFrameTime(float gpuFrameTimeMs);
+                                    // GPU Profilin
+    void                            SetGpuFrameTime(uint64_t frameNumber, float gpuFrameTimeMs);
 
     void                            SetGpuDeviceInfo(const char* name, const char* type, uint32_t apiMajor, uint32_t apiMinor, uint32_t apiPatch, bool timestampSupported, float timestampPeriodNs);
     const GpuDeviceProfileData&     GetGpuDeviceInfo() const { return gpuDevice; }

@@ -3,38 +3,45 @@
 #include <vulkan/vulkan.h>
 
 #include <cstdint>
+#include <vector>
 
 class Profiler;
 
 class VulkanGpuProfiler
 {
 private:
-    static constexpr uint32_t FRAME_BEGIN_QUERY = 0;
-    static constexpr uint32_t FRAME_END_QUERY = 1;
-    static constexpr uint32_t QUERY_COUNT = 2;
+    static constexpr uint32_t QUERIES_PER_FRAME = 2;
+
+    struct FrameQueryState
+    {
+        bool active = false;
+        bool pending = false;
+        uint64_t frameNumber = 0;
+    };
 
     VkDevice device = VK_NULL_HANDLE;
     VkQueryPool queryPool = VK_NULL_HANDLE;
 
     float timestampPeriod = 0.0f;
     uint32_t timestampValidBits = 0;
+    uint32_t frameCount = 0;
 
     bool supported = false;
-    bool frameActive = false;
-    bool pendingResult = false;
+
+    std::vector<FrameQueryState> frameStates;
 
 public:
-    // Lifetime
-    bool                        Init(VkPhysicalDevice physicalDevice, VkDevice device, uint32_t graphicsQueueFamily);
-    void                        CleanUp();
+                                    // Lifetime
+    bool                            Init(VkPhysicalDevice physicalDevice, VkDevice device, uint32_t graphicsQueueFamily, uint32_t frameCount);
+    void                            CleanUp();
 
-    // GPU Frame Profiling
-    void                        BeginFrame(VkCommandBuffer commandBuffer);
-    void                        EndFrame(VkCommandBuffer commandBuffer);
-    void                        MarkSubmitted();
-    void                        ResolvePreviousFrame(Profiler& profiler);
+                                    // GPU Frame Profiling
+    void                            BeginFrame(VkCommandBuffer commandBuffer, uint32_t frameSlot, uint64_t frameNumber);
+    void                            EndFrame(VkCommandBuffer commandBuffer, uint32_t frameSlot);
+    void                            MarkSubmitted(uint32_t frameSlot);
+    void                            ResolveFrame(uint32_t frameSlot, Profiler& profiler);
 
-    // State
-    bool                        IsSupported() const { return supported; }
-    float                       GetTimestampPeriod() const { return timestampPeriod; }
+                                    // State
+    bool                            IsSupported() const { return supported; }
+    float                           GetTimestampPeriod() const { return timestampPeriod; }
 };

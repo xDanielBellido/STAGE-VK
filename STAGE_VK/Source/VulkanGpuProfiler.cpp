@@ -5,9 +5,10 @@
 #include <stdexcept>
 #include <vector>
 
-bool VulkanGpuProfiler::Init(VkPhysicalDevice physicalDevice, VkDevice device, uint32_t graphicsQueueFamily)
+bool VulkanGpuProfiler::Init(VkPhysicalDevice physicalDevice, VkDevice device, uint32_t graphicsQueueFamily, uint32_t frameCount)
 {
     this->device = device;
+    this->frameCount = frameCount;
 
     VkPhysicalDeviceProperties properties{};
     vkGetPhysicalDeviceProperties(physicalDevice, &properties);
@@ -36,15 +37,16 @@ bool VulkanGpuProfiler::Init(VkPhysicalDevice physicalDevice, VkDevice device, u
     VkQueryPoolCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
     createInfo.queryType = VK_QUERY_TYPE_TIMESTAMP;
-    createInfo.queryCount = QUERY_COUNT;
+    createInfo.queryCount = frameCount * QUERIES_PER_FRAME;
 
     if (vkCreateQueryPool(device, &createInfo, nullptr, &queryPool) != VK_SUCCESS)
     {
         return false;
     }
 
-    supported = true;
+    frameStates.resize(frameCount);
 
+    supported = true;
     return true;
 }
 
@@ -56,60 +58,88 @@ void VulkanGpuProfiler::CleanUp()
         queryPool = VK_NULL_HANDLE;
     }
 
-    device = VK_NULL_HANDLE;
+    frameStates.clear();
 
+    device = VK_NULL_HANDLE;
     timestampPeriod = 0.0f;
     timestampValidBits = 0;
-
+    frameCount = 0;
     supported = false;
-    frameActive = false;
-    pendingResult = false;
 }
 
-void VulkanGpuProfiler::BeginFrame(VkCommandBuffer commandBuffer)
+void VulkanGpuProfiler::BeginFrame(VkCommandBuffer commandBuffer, uint32_t frameSlot, uint64_t frameNumber)
 {
-    if (!supported)
+    if (!supported || frameSlot >= frameStates.size())
     {
         return;
     }
 
-    vkCmdResetQueryPool(commandBuffer, queryPool, 0, QUERY_COUNT);
-    vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, queryPool, FRAME_BEGIN_QUERY);
+    const uint32_t beginQuery = frameSlot * QUERIES_PER_FRAME;
 
-    frameActive = true;
+    vkCmdResetQueryPool(commandBuffer, queryPool, beginQuery, QUERIES_PER_FRAME);
+    vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, queryPool, beginQuery);
+
+    FrameQueryState& state = frameStates[frameSlot];
+    state.active = true;
+    state.frameNumber = frameNumber;
 }
 
-void VulkanGpuProfiler::EndFrame(VkCommandBuffer commandBuffer)
+void VulkanGpuProfiler::EndFrame(VkCommandBuffer commandBuffer, uint32_t frameSlot)
 {
-    if (!supported || !frameActive)
+    if (!supported || frameSlot >= frameStates.size())
     {
         return;
     }
 
-    vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool, FRAME_END_QUERY);
-}
+    FrameQueryState& state = frameStates[frameSlot];
 
-void VulkanGpuProfiler::MarkSubmitted()
-{
-    if (!supported || !frameActive)
+    if (!state.active)
     {
         return;
     }
 
-    pendingResult = true;
-    frameActive = false;
+    const uint32_t endQuery = frameSlot * QUERIES_PER_FRAME + 1;
+
+    vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool, endQuery);
 }
 
-void VulkanGpuProfiler::ResolvePreviousFrame(Profiler& profiler)
+void VulkanGpuProfiler::MarkSubmitted(uint32_t frameSlot)
 {
-    if (!supported || !pendingResult)
+    if (!supported || frameSlot >= frameStates.size())
     {
         return;
     }
 
-    uint64_t timestamps[QUERY_COUNT]{};
+    FrameQueryState& state = frameStates[frameSlot];
 
-    const VkResult result = vkGetQueryPoolResults(device, queryPool, 0, QUERY_COUNT, sizeof(timestamps), timestamps, sizeof(uint64_t), VK_QUERY_RESULT_64_BIT);
+    if (!state.active)
+    {
+        return;
+    }
+
+    state.pending = true;
+    state.active = false;
+}
+
+void VulkanGpuProfiler::ResolveFrame(uint32_t frameSlot, Profiler& profiler)
+{
+    if (!supported || frameSlot >= frameStates.size())
+    {
+        return;
+    }
+
+    FrameQueryState& state = frameStates[frameSlot];
+
+    if (!state.pending)
+    {
+        return;
+    }
+
+    const uint32_t beginQuery = frameSlot * QUERIES_PER_FRAME;
+
+    uint64_t timestamps[QUERIES_PER_FRAME]{};
+
+    const VkResult result = vkGetQueryPoolResults(device, queryPool, beginQuery, QUERIES_PER_FRAME, sizeof(timestamps), timestamps, sizeof(uint64_t), VK_QUERY_RESULT_64_BIT);
 
     if (result == VK_NOT_READY)
     {
@@ -125,18 +155,18 @@ void VulkanGpuProfiler::ResolvePreviousFrame(Profiler& profiler)
 
     if (timestampValidBits >= 64)
     {
-        timestampDelta = timestamps[FRAME_END_QUERY] - timestamps[FRAME_BEGIN_QUERY];
+        timestampDelta = timestamps[1] - timestamps[0];
     }
     else
     {
         const uint64_t timestampMask = (1ULL << timestampValidBits) - 1ULL;
-        timestampDelta = (timestamps[FRAME_END_QUERY] - timestamps[FRAME_BEGIN_QUERY]) & timestampMask;
+        timestampDelta = (timestamps[1] - timestamps[0]) & timestampMask;
     }
 
     const double gpuTimeNs = static_cast<double>(timestampDelta) * static_cast<double>(timestampPeriod);
     const float gpuTimeMs = static_cast<float>(gpuTimeNs / 1000000.0);
 
-    profiler.SetLatestGpuFrameTime(gpuTimeMs);
+    profiler.SetGpuFrameTime(state.frameNumber, gpuTimeMs);
 
-    pendingResult = false;
+    state.pending = false;
 }

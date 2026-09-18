@@ -93,6 +93,7 @@ private:
     uint32_t currentImageIndex = 0;
     bool frameReady = false;
     bool swapchainNeedsRecreation = false;
+    uint32_t currentFrameSlot = 0;
 
     // Systems that depend on swapchain resources
     std::vector<IVulkanSwapchainListener*> swapchainListeners;
@@ -101,6 +102,7 @@ private:
 public:
 
     static constexpr uint32_t API_VERSION = VK_API_VERSION_1_2;
+    static constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
                         // Module lifecycle
     bool                Init() override;
@@ -120,7 +122,7 @@ public:
     VkQueue             GetPresentQueue() const { return vulkanDevice.GetPresentQueue(); }
 
                         // Current frame
-    VkCommandBuffer     GetCommandBuffer() const { return commandContext.GetCommandBuffer(); }
+    VkCommandBuffer     GetCommandBuffer() const { return commandContext.GetCommandBuffer(currentFrameSlot); }
     uint32_t            GetCurrentImageIndex() const { return currentImageIndex; }
     bool                IsFrameReady() const { return frameReady; }
 

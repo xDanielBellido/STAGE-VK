@@ -62,12 +62,12 @@ bool VulkanModule::Init()
     }
 
     // Create the command pool and primary command buffer used to record frames.
-    if (!commandContext.Init(vulkanDevice.GetDevice(), vulkanDevice.GetQueueFamilies().graphicsFamily.value()))
+    if (!commandContext.Init(vulkanDevice.GetDevice(), vulkanDevice.GetQueueFamilies().graphicsFamily.value(), MAX_FRAMES_IN_FLIGHT))
     {
         return false;
     }
 
-    if (!gpuProfiler.Init(vulkanDevice.GetPhysicalDevice(), vulkanDevice.GetDevice(), vulkanDevice.GetQueueFamilies().graphicsFamily.value()))
+    if (!gpuProfiler.Init(vulkanDevice.GetPhysicalDevice(), vulkanDevice.GetDevice(), vulkanDevice.GetQueueFamilies().graphicsFamily.value(), MAX_FRAMES_IN_FLIGHT))
     {
         return false;
     }
@@ -86,7 +86,7 @@ bool VulkanModule::Init()
     );
 
     // Create the synchronization objects required by the frame lifecycle.
-    if (!frameContext.Init(vulkanDevice.GetDevice(), vulkanSwapchain.GetImageCount()))
+    if (!frameContext.Init(vulkanDevice.GetDevice(), vulkanSwapchain.GetImageCount(), MAX_FRAMES_IN_FLIGHT))
     {
         return false;
     }
@@ -109,20 +109,20 @@ void VulkanModule::PreRender()
     }
 
     VkDevice device = vulkanDevice.GetDevice();
-    VkFence inFlightFence = frameContext.GetInFlightFence();
+    VkFence inFlightFence = frameContext.GetInFlightFence(currentFrameSlot);
 
     {
         PROFILE_SCOPE(app->GetProfiler(), "WaitForPreviousFrame");
         vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
     }
 
-    gpuProfiler.ResolvePreviousFrame(app->GetProfiler());
+    gpuProfiler.ResolveFrame(currentFrameSlot, app->GetProfiler());
 
     VkResult result = VK_SUCCESS;
 
     {
         PROFILE_SCOPE(app->GetProfiler(), "AcquireSwapchainImage");
-        result = vkAcquireNextImageKHR(device, vulkanSwapchain.GetSwapchain(), UINT64_MAX, frameContext.GetImageAvailableSemaphore(), VK_NULL_HANDLE, &currentImageIndex);
+        result = vkAcquireNextImageKHR(device, vulkanSwapchain.GetSwapchain(), UINT64_MAX, frameContext.GetImageAvailableSemaphore(currentFrameSlot), VK_NULL_HANDLE, &currentImageIndex);
     }
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR)
@@ -143,7 +143,7 @@ void VulkanModule::PreRender()
 
     vkResetFences(device, 1, &inFlightFence);
 
-    VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer();
+    VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer(currentFrameSlot);
 
     {
         PROFILE_SCOPE(app->GetProfiler(), "BeginCommandBuffer");
@@ -164,7 +164,7 @@ void VulkanModule::PreRender()
 
     if (app->GetProfiler().IsRecording())
     {
-        gpuProfiler.BeginFrame(commandBuffer);
+        gpuProfiler.BeginFrame(commandBuffer, currentFrameSlot, app->GetProfiler().GetCurrentFrame().frameNumber);
     }
 
     const VkExtent2D extent = vulkanSwapchain.GetExtent();
@@ -183,12 +183,12 @@ void VulkanModule::PostRender()
         return;
     }
 
-    VkSemaphore imageAvailableSemaphore = frameContext.GetImageAvailableSemaphore();
+    VkSemaphore imageAvailableSemaphore = frameContext.GetImageAvailableSemaphore(currentFrameSlot);
     VkSemaphore renderFinishedSemaphore = frameContext.GetRenderFinishedSemaphore(currentImageIndex);
-    VkFence inFlightFence = frameContext.GetInFlightFence();
-    VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer();
+    VkFence inFlightFence = frameContext.GetInFlightFence(currentFrameSlot);
+    VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer(currentFrameSlot);
 
-    gpuProfiler.EndFrame(commandBuffer);
+    gpuProfiler.EndFrame(commandBuffer, currentFrameSlot);
 
     {
         PROFILE_SCOPE(app->GetProfiler(), "EndCommandBuffer");
@@ -222,7 +222,7 @@ void VulkanModule::PostRender()
 
     app->GetProfiler().RecordQueueSubmission();
 
-    gpuProfiler.MarkSubmitted();
+    gpuProfiler.MarkSubmitted(currentFrameSlot);
 
     VkSwapchainKHR swapchain = vulkanSwapchain.GetSwapchain();
 
@@ -253,6 +253,7 @@ void VulkanModule::PostRender()
     }
 
     frameReady = false;
+    currentFrameSlot = (currentFrameSlot + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 void VulkanModule::OnResize(int width, int height)
@@ -335,7 +336,7 @@ void VulkanModule::RecreateSwapchain()
 
     // Synchronization is recreated because the number of swapchain images may
     // have changed.
-    if (!frameContext.Init(vulkanDevice.GetDevice(), vulkanSwapchain.GetImageCount()))
+    if (!frameContext.Init(vulkanDevice.GetDevice(), vulkanSwapchain.GetImageCount(), MAX_FRAMES_IN_FLIGHT))
     {
         throw std::runtime_error("Failed to recreate Vulkan frame synchronization.");
     }
@@ -350,6 +351,7 @@ void VulkanModule::RecreateSwapchain()
     }
 
     currentImageIndex = 0;
+    currentFrameSlot = 0;
     frameReady = false;
     swapchainNeedsRecreation = false;
 }
