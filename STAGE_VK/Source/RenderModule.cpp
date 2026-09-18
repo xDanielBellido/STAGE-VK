@@ -36,12 +36,6 @@ bool RenderModule::Init()
 
     vulkanModule.RegisterSwapchainListener(this);
 
-    LOG_INFO("Player loaded.");
-    LOG_INFO("Player loaded.");
-    LOG_INFO("Player loaded.");
-    LOG_WARN("Test warning.");
-    LOG_ERROR("Test error.");
-
     return true;
 }
 

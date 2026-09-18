@@ -54,9 +54,8 @@ bool Application::Init()
 
 void Application::Update()
 {
-    window->PollEvents();
-
     const auto now = Clock::now();
+
     deltaTime = std::chrono::duration<float>(now - lastFrameTime).count();
     lastFrameTime = now;
 
@@ -64,6 +63,10 @@ void Application::Update()
     {
         fps = 1.0f / deltaTime;
     }
+
+    profiler.FinalizePreviousFrameTiming(deltaTime, fps);
+
+    window->PollEvents();
 
     int framebufferWidth = 0;
     int framebufferHeight = 0;
@@ -86,7 +89,7 @@ void Application::Update()
         return;
     }
 
-    profiler.BeginFrame(deltaTime, fps);
+    profiler.BeginFrame();
 
     {
         PROFILE_SCOPE(profiler, "Frame");

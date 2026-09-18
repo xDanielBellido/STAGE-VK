@@ -1,6 +1,19 @@
 #include "Profiler.h"
 
-void Profiler::BeginFrame(float deltaTimeSeconds, float fps)
+void Profiler::FinalizePreviousFrameTiming(float deltaTimeSeconds, float fps)
+{
+    if (!pendingFrameTiming || frameHistory.empty())
+    {
+        return;
+    }
+
+    frameHistory.back().fps = fps;
+    frameHistory.back().frameTimeMs = deltaTimeSeconds * 1000.0f;
+
+    pendingFrameTiming = false;
+}
+
+void Profiler::BeginFrame()
 {
     recording = recordingRequested;
 
@@ -10,10 +23,7 @@ void Profiler::BeginFrame(float deltaTimeSeconds, float fps)
     }
 
     currentFrame = {};
-
     currentFrame.frameNumber = nextFrameNumber++;
-    currentFrame.fps = fps;
-    currentFrame.frameTimeMs = deltaTimeSeconds * 1000.0f;
 
     currentCpuDepth = 0;
     frameStartTime = Clock::now();
@@ -36,6 +46,7 @@ void Profiler::EndFrame()
     }
 
     frameHistory.push_back(currentFrame);
+    pendingFrameTiming = true;
 }
 
 std::size_t Profiler::BeginCpuEvent(const char* name)
@@ -151,4 +162,5 @@ void Profiler::StopRecording()
 void Profiler::Clear()
 {
     frameHistory.clear();
+    pendingFrameTiming = false;
 }

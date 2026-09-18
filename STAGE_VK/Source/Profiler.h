@@ -18,6 +18,7 @@ private:
 
     bool recording = true;
     bool recordingRequested = true;
+    bool pendingFrameTiming = false;
 
     uint64_t nextFrameNumber = 0;
     uint32_t currentCpuDepth = 0;
@@ -30,7 +31,8 @@ private:
 
 public:
                                     // Frame Recording
-    void                            BeginFrame(float deltaTimeSeconds, float fps);
+    void                            FinalizePreviousFrameTiming(float deltaTimeSeconds, float fps);
+    void                            BeginFrame();
     void                            EndFrame();
 
                                     // CPU Profiling

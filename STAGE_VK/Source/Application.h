@@ -54,7 +54,7 @@ private:
     float deltaTime = 0.0f;
     float fps = 0.0f;
 
-    using Clock = std::chrono::high_resolution_clock;
+    using Clock = std::chrono::steady_clock;
     Clock::time_point lastFrameTime;
 
 public:

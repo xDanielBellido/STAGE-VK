@@ -1,4 +1,5 @@
 #include "VulkanSwapchain.h"
+#include "Log.h"
 
 #include <algorithm>
 #include <stdexcept>
@@ -13,6 +14,14 @@ bool VulkanSwapchain::Init(VkPhysicalDevice physicalDevice, VkDevice device, VkS
 
     VkSurfaceFormatKHR surfaceFormat = ChooseSurfaceFormat(support.formats);
     VkPresentModeKHR presentMode = ChoosePresentMode(support.presentModes);
+
+    if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+        LOG_INFO("[Vulkan] Present Mode: MAILBOX");
+    else if (presentMode == VK_PRESENT_MODE_FIFO_KHR)
+        LOG_INFO("[Vulkan] Present Mode: FIFO");
+    else
+        LOG_INFO("[Vulkan] Present Mode: {}", static_cast<int>(presentMode));
+
     VkExtent2D swapchainExtent = ChooseExtent(support.capabilities, width, height);
 
     uint32_t imageCount = support.capabilities.minImageCount + 1;
