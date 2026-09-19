@@ -101,11 +101,6 @@ bool ImGuiPass::Init(const ImGuiPassInitInfo& initInfo)
         throw std::runtime_error("Failed to load Font Awesome icon font: " + iconFontPath.string());
     }
 
-    if (!iconFont)
-    {
-        throw std::runtime_error("Failed to load Font Awesome icon font: " + iconFontPath.string());
-    }
-
     ImGui::StyleColorsDark();
 
     if (!ImGui_ImplGlfw_InitForVulkan(initInfo.window, true))

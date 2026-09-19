@@ -23,6 +23,19 @@ bool VulkanSwapchain::Init(VkPhysicalDevice physicalDevice, VkDevice device, VkS
         LOG_INFO("[Vulkan] Present Mode: {}", static_cast<int>(presentMode));
 
     VkExtent2D swapchainExtent = ChooseExtent(support.capabilities, width, height);
+    VkCompositeAlphaFlagBitsKHR compositeAlpha = ChooseCompositeAlpha(support.capabilities);
+
+    VkImageUsageFlags imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+    if ((support.capabilities.supportedUsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) == 0)
+    {
+        throw std::runtime_error("Vulkan surface does not support color attachment swapchain images.");
+    }
+
+    if ((support.capabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT) != 0)
+    {
+        imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    }
 
     uint32_t imageCount = support.capabilities.minImageCount + 1;
 
@@ -39,7 +52,7 @@ bool VulkanSwapchain::Init(VkPhysicalDevice physicalDevice, VkDevice device, VkS
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
     createInfo.imageExtent = swapchainExtent;
     createInfo.imageArrayLayers = 1;
-    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    createInfo.imageUsage = imageUsage;
 
     uint32_t queueFamilyIndices[] = { queueFamilies.graphicsFamily.value(), queueFamilies.presentFamily.value() };
 
@@ -55,7 +68,7 @@ bool VulkanSwapchain::Init(VkPhysicalDevice physicalDevice, VkDevice device, VkS
     }
 
     createInfo.preTransform = support.capabilities.currentTransform;
-    createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    createInfo.compositeAlpha = compositeAlpha;
     createInfo.presentMode = presentMode;
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = VK_NULL_HANDLE;
@@ -168,6 +181,27 @@ VkExtent2D VulkanSwapchain::ChooseExtent(const VkSurfaceCapabilitiesKHR& capabil
     actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
 
     return actualExtent;
+}
+
+VkCompositeAlphaFlagBitsKHR VulkanSwapchain::ChooseCompositeAlpha(const VkSurfaceCapabilitiesKHR& capabilities) const
+{
+    constexpr VkCompositeAlphaFlagBitsKHR preferredModes[] =
+    {
+        VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+        VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
+        VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
+        VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR
+    };
+
+    for (VkCompositeAlphaFlagBitsKHR mode : preferredModes)
+    {
+        if ((capabilities.supportedCompositeAlpha & mode) != 0)
+        {
+            return mode;
+        }
+    }
+
+    throw std::runtime_error("Vulkan surface does not support a valid composite alpha mode.");
 }
 
 void VulkanSwapchain::GetSwapchainImages()

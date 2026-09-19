@@ -11,10 +11,12 @@
     and chooses an appropriate image format, presentation mode and extent.
 
     This class is responsible for:
-    - querying swapchain support
+    - querying swapchain support and surface capabilities
     - selecting the surface format
     - selecting the presentation mode
     - selecting the swapchain extent
+    - selecting a supported composite alpha mode
+    - validating the required swapchain image usage
     - creating and destroying VkSwapchainKHR
 
     VkPhysicalDevice, VkDevice and VkSurfaceKHR are provided by the Vulkan
@@ -57,6 +59,7 @@ private:
     VkSurfaceFormatKHR ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& formats) const;
     VkPresentModeKHR ChoosePresentMode(const std::vector<VkPresentModeKHR>& presentModes) const;
     VkExtent2D ChooseExtent(const VkSurfaceCapabilitiesKHR& capabilities, uint32_t width, uint32_t height) const;
+    VkCompositeAlphaFlagBitsKHR ChooseCompositeAlpha(const VkSurfaceCapabilitiesKHR& capabilities) const;
 
     void GetSwapchainImages();
     void CreateImageViews();

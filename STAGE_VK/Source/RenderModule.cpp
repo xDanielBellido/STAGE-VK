@@ -56,7 +56,7 @@ void RenderModule::PreRender()
 
 void RenderModule::Render()
 {
-    PROFILE_SCOPE(app->GetProfiler(), "RenderModule::PostRender");
+    PROFILE_SCOPE(app->GetProfiler(), "RenderModule::Render");
 
     if (!vulkanModule.IsFrameReady())
     {
