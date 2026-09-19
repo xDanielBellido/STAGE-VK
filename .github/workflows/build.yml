@@ -26,4 +26,4 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Build ${{ matrix.configuration }} x64
-        run: msbuild STAGE_VK.sln /m /p:Configuration=${{ matrix.configuration }} /p:Platform=x64
+        run: msbuild "STAGE_VK/STAGE_VK.sln" /m /p:Configuration=${{ matrix.configuration }} /p:Platform=x64
