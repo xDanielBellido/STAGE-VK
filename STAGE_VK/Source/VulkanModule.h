@@ -63,6 +63,7 @@
 #include <vulkan/vulkan.h>
 
 #include "VulkanDevice.h"
+#include "VulkanAllocator.h"
 #include "VulkanSwapchain.h"
 #include "VulkanCommandContext.h"
 #include "FrameContext.h"
@@ -84,6 +85,7 @@ private:
 
     // Vulkan subsystems
     VulkanDevice vulkanDevice;
+    VulkanAllocator vulkanAllocator;
     VulkanSwapchain vulkanSwapchain;
     VulkanCommandContext commandContext;
     FrameContext frameContext;
@@ -135,6 +137,8 @@ public:
                         // Device information
     uint32_t            GetApiVersion() const { return API_VERSION; }
     uint32_t            GetGraphicsQueueFamily() const { return vulkanDevice.GetQueueFamilies().graphicsFamily.value(); }
+    VulkanAllocator&    GetAllocator() { return vulkanAllocator; }
+    const VulkanAllocator& GetAllocator() const { return vulkanAllocator; }
 
                         // Swapchain listeners
     void                RegisterSwapchainListener(IVulkanSwapchainListener* listener);

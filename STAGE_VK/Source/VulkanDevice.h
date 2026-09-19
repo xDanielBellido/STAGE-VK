@@ -51,6 +51,7 @@ private:
                                     // Selected Physical Device
     VkPhysicalDevice                physicalDevice = VK_NULL_HANDLE;
     QueueFamilyIndices              queueFamilies;
+    uint32_t                        requiredApiVersion = VK_API_VERSION_1_0;
 
                                     // Logical Device
     VkDevice                        device = VK_NULL_HANDLE;
@@ -59,7 +60,7 @@ private:
 
 public:
                                     // Device Lifetime
-    bool                            Init(VkInstance instance, VkSurfaceKHR surface);
+    bool                            Init(VkInstance instance, VkSurfaceKHR surface, uint32_t requiredApiVersion);
     void                            CleanUp();
     void                            WaitIdle() const;
 

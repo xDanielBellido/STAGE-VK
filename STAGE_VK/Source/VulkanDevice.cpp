@@ -11,12 +11,13 @@ namespace
     const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 }
 
-bool VulkanDevice::Init(VkInstance instance, VkSurfaceKHR surface)
+bool VulkanDevice::Init(VkInstance instance, VkSurfaceKHR surface, uint32_t requiredApiVersion)
 {
     // VulkanModule owns these handles. VulkanDevice only keeps them because
     // they are required during physical-device selection and device creation.
     this->instance = instance;
     this->surface = surface;
+    this->requiredApiVersion = requiredApiVersion;
 
     PickPhysicalDevice();
     CreateLogicalDevice();
@@ -37,6 +38,7 @@ void VulkanDevice::CleanUp()
     graphicsQueue = VK_NULL_HANDLE;
     presentQueue = VK_NULL_HANDLE;
     queueFamilies = {};
+    requiredApiVersion = VK_API_VERSION_1_0;
 
     instance = VK_NULL_HANDLE;
     surface = VK_NULL_HANDLE;
@@ -95,14 +97,18 @@ void VulkanDevice::PickPhysicalDevice()
 
 bool VulkanDevice::IsDeviceSuitable(VkPhysicalDevice device) const
 {
-    // A GPU is currently suitable if it provides the queue families required
-    // by STAGE VK, supports the swapchain extension and can present through
-    // the current window surface.
-    QueueFamilyIndices indices = FindQueueFamilies(device);
-    bool extensionsSupported = CheckDeviceExtensionSupport(device);
-    bool swapchainAdequate = extensionsSupported && HasAdequateSwapchainSupport(device);
+    // A GPU is suitable if it supports the Vulkan API version and queue,
+    // swapchain and presentation capabilities required by STAGE VK.
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(device, &properties);
 
-    return indices.IsComplete() && extensionsSupported && swapchainAdequate;
+    const bool apiVersionSupported = properties.apiVersion >= requiredApiVersion;
+
+    QueueFamilyIndices indices = FindQueueFamilies(device);
+    const bool extensionsSupported = CheckDeviceExtensionSupport(device);
+    const bool swapchainAdequate = extensionsSupported && HasAdequateSwapchainSupport(device);
+
+    return apiVersionSupported && indices.IsComplete() && extensionsSupported && swapchainAdequate;
 }
 
 QueueFamilyIndices VulkanDevice::FindQueueFamilies(VkPhysicalDevice device) const

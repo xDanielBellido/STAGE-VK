@@ -44,6 +44,9 @@
     <Filter Include="Source\Editor\Profiler">
       <UniqueIdentifier>{ad6f17bc-c5fe-47ca-be6c-e844ed535ed8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\VMA">
+      <UniqueIdentifier>{56c29885-359a-4407-87ce-f689a7d35df4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\main.cpp">
@@ -120,6 +123,12 @@
     </ClCompile>
     <ClCompile Include="Source\FramePacer.cpp">
       <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\VulkanAllocator.cpp">
+      <Filter>Source\Core\VulkanCore</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\VulkanBuffer.cpp">
+      <Filter>Source\Core\VulkanCore</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -221,6 +230,15 @@
     </ClInclude>
     <ClInclude Include="Source\FramePacer.h">
       <Filter>Source\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="External Libraries\VMA\include\vk_mem_alloc.h">
+      <Filter>ThirdParty\VMA</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\VulkanAllocator.h">
+      <Filter>Source\Core\VulkanCore</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\VulkanBuffer.h">
+      <Filter>Source\Core\VulkanCore</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

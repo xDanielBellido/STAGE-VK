@@ -11,6 +11,8 @@
 #include <cstring>
 #include <algorithm>
 
+#include "VulkanBuffer.h"
+
 namespace
 {
     const char* GetPhysicalDeviceTypeName(VkPhysicalDeviceType type)
@@ -46,10 +48,20 @@ bool VulkanModule::Init()
     CreateSurface(app->GetWindow().GetNativeHandle());
 
     // Select a physical device, create the logical device and retrieve queues.
-    if (!vulkanDevice.Init(instance, surface))
+    if (!vulkanDevice.Init(instance, surface, API_VERSION))
     {
         return false;
     }
+
+    // Create the GPU memory allocator after the Vulkan device is available.
+    if (!vulkanAllocator.Init(instance, vulkanDevice.GetPhysicalDevice(), vulkanDevice.GetDevice(), API_VERSION))
+    {
+        return false;
+    }
+
+    VulkanBuffer testBuffer;
+    testBuffer.Init(vulkanAllocator, 1024, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+    testBuffer.CleanUp();
 
     // The swapchain must match the current framebuffer size.
     int width = 0;
@@ -276,6 +288,7 @@ bool VulkanModule::CleanUp()
     frameContext.CleanUp();
     commandContext.CleanUp();
     vulkanSwapchain.CleanUp();
+    vulkanAllocator.CleanUp();
     vulkanDevice.CleanUp();
 
     if (surface != VK_NULL_HANDLE)
