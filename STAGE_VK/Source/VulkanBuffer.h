@@ -40,6 +40,7 @@ private:
     VkBuffer                        buffer = VK_NULL_HANDLE;
     VmaAllocation                   allocation = nullptr;
     VkDeviceSize                    size = 0;
+    VkBufferUsageFlags              usage = 0;
 
     // Allocation Properties
     VkMemoryPropertyFlags           memoryProperties = 0;
@@ -64,6 +65,7 @@ public:
     // Buffer Access
     VkBuffer                        GetBuffer() const { return buffer; }
     VkDeviceSize                    GetSize() const { return size; }
+    VkBufferUsageFlags              GetUsage() const { return usage; }
     bool                            IsValid() const { return buffer != VK_NULL_HANDLE && allocation != nullptr; }
 
     // Memory Properties

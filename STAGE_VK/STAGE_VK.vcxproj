@@ -167,6 +167,7 @@
     <ClCompile Include="Source\VulkanGpuProfiler.cpp" />
     <ClCompile Include="Source\VulkanModule.cpp" />
     <ClCompile Include="Source\VulkanSwapchain.cpp" />
+    <ClCompile Include="Source\VulkanUploadContext.cpp" />
     <ClCompile Include="Source\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -205,6 +206,7 @@
     <ClInclude Include="Source\VulkanGpuProfiler.h" />
     <ClInclude Include="Source\VulkanModule.h" />
     <ClInclude Include="Source\VulkanSwapchain.h" />
+    <ClInclude Include="Source\VulkanUploadContext.h" />
     <ClInclude Include="Source\Window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

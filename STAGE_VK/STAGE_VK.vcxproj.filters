@@ -130,6 +130,9 @@
     <ClCompile Include="Source\VulkanBuffer.cpp">
       <Filter>Source\Core\VulkanCore</Filter>
     </ClCompile>
+    <ClCompile Include="Source\VulkanUploadContext.cpp">
+      <Filter>Source\Core\VulkanCore</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Globals.h">
@@ -238,6 +241,9 @@
       <Filter>Source\Core\VulkanCore</Filter>
     </ClInclude>
     <ClInclude Include="Source\VulkanBuffer.h">
+      <Filter>Source\Core\VulkanCore</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\VulkanUploadContext.h">
       <Filter>Source\Core\VulkanCore</Filter>
     </ClInclude>
   </ItemGroup>

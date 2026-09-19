@@ -66,6 +66,7 @@
 #include "VulkanAllocator.h"
 #include "VulkanSwapchain.h"
 #include "VulkanCommandContext.h"
+#include "VulkanUploadContext.h"
 #include "FrameContext.h"
 #include "VulkanGpuProfiler.h"
 #include "IVulkanSwapchainListener.h"
@@ -86,6 +87,7 @@ private:
     // Vulkan subsystems
     VulkanDevice vulkanDevice;
     VulkanAllocator vulkanAllocator;
+    VulkanUploadContext uploadContext;
     VulkanSwapchain vulkanSwapchain;
     VulkanCommandContext commandContext;
     FrameContext frameContext;
@@ -139,6 +141,8 @@ public:
     uint32_t            GetGraphicsQueueFamily() const { return vulkanDevice.GetQueueFamilies().graphicsFamily.value(); }
     VulkanAllocator&    GetAllocator() { return vulkanAllocator; }
     const VulkanAllocator& GetAllocator() const { return vulkanAllocator; }
+    VulkanUploadContext& GetUploadContext() { return uploadContext; }
+    const VulkanUploadContext& GetUploadContext() const { return uploadContext; }
 
                         // Swapchain listeners
     void                RegisterSwapchainListener(IVulkanSwapchainListener* listener);

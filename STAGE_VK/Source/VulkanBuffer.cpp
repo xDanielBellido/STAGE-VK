@@ -67,6 +67,7 @@ bool VulkanBuffer::Init(const VulkanAllocator& allocatorOwner, VkDeviceSize buff
     buffer = createdBuffer;
     allocation = createdAllocation;
     size = bufferSize;
+    this->usage = bufferInfo.usage;
     memoryProperties = createdMemoryProperties;
 
     return true;
@@ -96,6 +97,7 @@ void VulkanBuffer::CleanUp()
     allocation = nullptr;
     allocator = nullptr;
     size = 0;
+    usage = 0;
     memoryProperties = 0;
 }
 
@@ -133,11 +135,13 @@ void VulkanBuffer::MoveFrom(VulkanBuffer& other) noexcept
     buffer = other.buffer;
     allocation = other.allocation;
     size = other.size;
+    usage = other.usage;
     memoryProperties = other.memoryProperties;
 
     other.allocator = nullptr;
     other.buffer = VK_NULL_HANDLE;
     other.allocation = nullptr;
     other.size = 0;
+    other.usage = 0;
     other.memoryProperties = 0;
 }

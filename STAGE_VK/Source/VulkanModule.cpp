@@ -57,6 +57,12 @@ bool VulkanModule::Init()
         return false;
     }
 
+    // Create the synchronous upload context using the existing graphics queue.
+    if (!uploadContext.Init(vulkanDevice.GetDevice(), vulkanDevice.GetGraphicsQueue(), vulkanDevice.GetQueueFamilies().graphicsFamily.value()))
+    {
+        return false;
+    }
+
     // The swapchain must match the current framebuffer size.
     int width = 0;
     int height = 0;
@@ -282,6 +288,7 @@ bool VulkanModule::CleanUp()
     frameContext.CleanUp();
     commandContext.CleanUp();
     vulkanSwapchain.CleanUp();
+    uploadContext.CleanUp();
     vulkanAllocator.CleanUp();
     vulkanDevice.CleanUp();
 
