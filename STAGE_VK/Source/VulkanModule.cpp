@@ -11,8 +11,6 @@
 #include <cstring>
 #include <algorithm>
 
-#include "VulkanBuffer.h"
-
 namespace
 {
     const char* GetPhysicalDeviceTypeName(VkPhysicalDeviceType type)
@@ -58,10 +56,6 @@ bool VulkanModule::Init()
     {
         return false;
     }
-
-    VulkanBuffer testBuffer;
-    testBuffer.Init(vulkanAllocator, 1024, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
-    testBuffer.CleanUp();
 
     // The swapchain must match the current framebuffer size.
     int width = 0;

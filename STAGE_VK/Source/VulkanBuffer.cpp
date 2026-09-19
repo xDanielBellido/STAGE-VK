@@ -2,6 +2,11 @@
 
 #include <stdexcept>
 
+VulkanBuffer::~VulkanBuffer()
+{
+    CleanUp();
+}
+
 VulkanBuffer::VulkanBuffer(VulkanBuffer&& other) noexcept
 {
     MoveFrom(other);
@@ -55,10 +60,27 @@ bool VulkanBuffer::Init(const VulkanAllocator& allocatorOwner, VkDeviceSize buff
         throw std::runtime_error("Failed to create Vulkan buffer.");
     }
 
+    VkMemoryPropertyFlags createdMemoryProperties = 0;
+    vmaGetAllocationMemoryProperties(allocatorHandle, createdAllocation, &createdMemoryProperties);
+
     allocator = allocatorHandle;
     buffer = createdBuffer;
     allocation = createdAllocation;
     size = bufferSize;
+    memoryProperties = createdMemoryProperties;
+
+    return true;
+}
+
+bool VulkanBuffer::InitHostWritable(const VulkanAllocator& allocatorOwner, VkDeviceSize bufferSize, VkBufferUsageFlags usage)
+{
+    Init(allocatorOwner, bufferSize, usage, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+
+    if (!IsHostVisible())
+    {
+        CleanUp();
+        throw std::runtime_error("Failed to create a host-visible Vulkan buffer.");
+    }
 
     return true;
 }
@@ -74,6 +96,35 @@ void VulkanBuffer::CleanUp()
     allocation = nullptr;
     allocator = nullptr;
     size = 0;
+    memoryProperties = 0;
+}
+
+void VulkanBuffer::Write(const void* data, VkDeviceSize dataSize, VkDeviceSize offset)
+{
+    if (!IsValid())
+    {
+        throw std::logic_error("Cannot write to an uninitialized Vulkan buffer.");
+    }
+
+    if (!IsHostVisible())
+    {
+        throw std::logic_error("Cannot write to Vulkan buffer memory that is not host-visible.");
+    }
+
+    if (data == nullptr || dataSize == 0)
+    {
+        throw std::invalid_argument("Vulkan buffer write requires valid data and a non-zero size.");
+    }
+
+    if (offset > size || dataSize > size - offset)
+    {
+        throw std::out_of_range("Vulkan buffer write exceeds buffer bounds.");
+    }
+
+    if (vmaCopyMemoryToAllocation(allocator, data, allocation, offset, dataSize) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to write data to Vulkan buffer.");
+    }
 }
 
 void VulkanBuffer::MoveFrom(VulkanBuffer& other) noexcept
@@ -82,9 +133,11 @@ void VulkanBuffer::MoveFrom(VulkanBuffer& other) noexcept
     buffer = other.buffer;
     allocation = other.allocation;
     size = other.size;
+    memoryProperties = other.memoryProperties;
 
     other.allocator = nullptr;
     other.buffer = VK_NULL_HANDLE;
     other.allocation = nullptr;
     other.size = 0;
+    other.memoryProperties = 0;
 }
