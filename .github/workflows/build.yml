@@ -32,12 +32,6 @@ jobs:
           version: 1.4.309.0
           cache: true
 
-      - name: Check Vulkan SDK layout
-        shell: pwsh
-        run: |
-          Write-Host "VULKAN_SDK = $env:VULKAN_SDK"
-          Get-ChildItem "$env:VULKAN_SDK"
-
       - name: Inspect Vulkan SDK
         shell: pwsh
         run: |
