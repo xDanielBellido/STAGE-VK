@@ -419,4 +419,5 @@ FodyWeavers.xsd
 
 External Libraries/Vulkan/Lib/
 *.lib
+!STAGE_VK/External Libraries/GLFW/lib-vc2022/glfw3.lib
 *.pdb
