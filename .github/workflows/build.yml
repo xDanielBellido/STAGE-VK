@@ -1,0 +1,29 @@
+name: STAGE VK CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build ${{ matrix.configuration }} x64
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build ${{ matrix.configuration }} x64
+        run: msbuild STAGE_VK.sln /m /p:Configuration=${{ matrix.configuration }} /p:Platform=x64
