@@ -62,7 +62,7 @@ public:
                                     // Device Lifetime
     bool                            Init(VkInstance instance, VkSurfaceKHR surface, uint32_t requiredApiVersion);
     void                            CleanUp();
-    void                            WaitIdle() const;
+    VkResult                        WaitIdle() const;
 
                                     // Vulkan Handles Access
     VkPhysicalDevice                GetPhysicalDevice() const { return physicalDevice; }

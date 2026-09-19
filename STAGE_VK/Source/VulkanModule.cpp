@@ -123,9 +123,16 @@ void VulkanModule::PreRender()
     VkDevice device = vulkanDevice.GetDevice();
     VkFence inFlightFence = frameContext.GetInFlightFence(currentFrameSlot);
 
+    VkResult waitResult = VK_SUCCESS;
+
     {
         PROFILE_SCOPE(app->GetProfiler(), "WaitForPreviousFrame");
-        vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
+        waitResult = vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
+    }
+
+    if (waitResult != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed while waiting for the previous Vulkan frame.");
     }
 
     gpuProfiler.ResolveFrame(currentFrameSlot, app->GetProfiler());
@@ -153,7 +160,10 @@ void VulkanModule::PreRender()
         throw std::runtime_error("Failed to acquire Vulkan swapchain image.");
     }
 
-    vkResetFences(device, 1, &inFlightFence);
+    if (vkResetFences(device, 1, &inFlightFence) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to reset Vulkan in-flight fence.");
+    }
 
     VkCommandBuffer commandBuffer = commandContext.GetCommandBuffer(currentFrameSlot);
 
@@ -280,8 +290,14 @@ void VulkanModule::OnResize(int width, int height)
 
 bool VulkanModule::CleanUp()
 {
+    bool success = true;
+
     // GPU resources cannot be destroyed while they are still in use.
-    vulkanDevice.WaitIdle();
+    if (vulkanDevice.WaitIdle() != VK_SUCCESS)
+    {
+        LOG_ERROR("Failed to wait for Vulkan device during shutdown.");
+        success = false;
+    }
 
     // Destroy resources in reverse dependency order.
     gpuProfiler.CleanUp();
@@ -306,7 +322,7 @@ bool VulkanModule::CleanUp()
         instance = VK_NULL_HANDLE;
     }
 
-    return true;
+    return success;
 }
 
 // ============================================================================
@@ -328,7 +344,10 @@ void VulkanModule::RecreateSwapchain()
 
     // Swapchain-dependent resources must no longer be in use before they are
     // destroyed.
-    vulkanDevice.WaitIdle();
+    if (vulkanDevice.WaitIdle() != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to wait for Vulkan device before swapchain recreation.");
+    }
 
     // Give higher-level systems a chance to destroy resources that depend on
     // the old swapchain, such as RenderModule framebuffers.

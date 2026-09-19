@@ -3,6 +3,11 @@
 
 #include <stdexcept>
 
+VulkanAllocator::~VulkanAllocator()
+{
+    CleanUp();
+}
+
 bool VulkanAllocator::Init(VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device, uint32_t apiVersion)
 {
     if (allocator != nullptr)

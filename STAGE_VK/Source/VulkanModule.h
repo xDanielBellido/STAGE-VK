@@ -19,6 +19,12 @@
         Selects the physical device, creates the logical device and exposes
         the graphics and presentation queues.
 
+    - VulkanAllocator
+        Owns the Vulkan Memory Allocator used by GPU resources.
+
+    - VulkanUploadContext
+        Records and submits synchronous staging uploads to GPU buffers.
+
     - VulkanSwapchain
         Creates and manages the swapchain, its images and image views.
 
@@ -149,7 +155,7 @@ public:
     void                UnregisterSwapchainListener(IVulkanSwapchainListener* listener);
 
                         // Synchronization
-    void                WaitIdle() const { vulkanDevice.WaitIdle(); }
+    VkResult            WaitIdle() const { return vulkanDevice.WaitIdle(); }
 
 
 private:

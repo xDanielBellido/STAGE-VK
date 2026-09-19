@@ -32,7 +32,16 @@ private:
     VmaAllocator                    allocator = nullptr;
 
 public:
-                                    // Allocator Lifetime
+
+    // Allocator Lifetime
+    VulkanAllocator() = default;
+    ~VulkanAllocator();
+
+    VulkanAllocator(const VulkanAllocator&) = delete;
+    VulkanAllocator& operator=(const VulkanAllocator&) = delete;
+    VulkanAllocator(VulkanAllocator&&) = delete;
+    VulkanAllocator& operator=(VulkanAllocator&&) = delete;
+
     bool                            Init(VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device, uint32_t apiVersion);
     void                            CleanUp();
 
