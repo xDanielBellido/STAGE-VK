@@ -32,5 +32,17 @@ jobs:
           version: latest
           cache: true
 
+      - name: Inspect Vulkan SDK
+        shell: pwsh
+        run: |
+          Write-Host "VULKAN_SDK=$env:VULKAN_SDK"
+          Write-Host "VULKAN_SDK_VERSION=$env:VULKAN_SDK_VERSION"
+          Write-Host "Root contents:"
+          Get-ChildItem "$env:VULKAN_SDK" -Force
+          Write-Host "Searching vulkan.h:"
+          Get-ChildItem "$env:VULKAN_SDK" -Recurse -Filter vulkan.h | Select-Object -First 10 FullName
+          Write-Host "Searching vulkan-1.lib:"
+          Get-ChildItem "$env:VULKAN_SDK" -Recurse -Filter vulkan-1.lib | Select-Object -First 10 FullName
+
       - name: Build ${{ matrix.configuration }} x64
         run: msbuild "STAGE_VK/STAGE_VK.sln" /m /p:Configuration=${{ matrix.configuration }} /p:Platform=x64
