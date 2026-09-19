@@ -15,6 +15,7 @@ jobs:
     runs-on: windows-latest
 
     strategy:
+      fail-fast: false
       matrix:
         configuration: [Debug, Release]
 
@@ -24,6 +25,12 @@ jobs:
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
+
+      - name: Install Vulkan SDK
+        uses: humbletim/install-vulkan-sdk@v1.2
+        with:
+          version: latest
+          cache: true
 
       - name: Build ${{ matrix.configuration }} x64
         run: msbuild "STAGE_VK/STAGE_VK.sln" /m /p:Configuration=${{ matrix.configuration }} /p:Platform=x64
