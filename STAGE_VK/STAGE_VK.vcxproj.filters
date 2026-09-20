@@ -133,6 +133,9 @@
     <ClCompile Include="Source\VulkanUploadContext.cpp">
       <Filter>Source\Core\VulkanCore</Filter>
     </ClCompile>
+    <ClCompile Include="Source\GeometryPass.cpp">
+      <Filter>Source\Passes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Globals.h">
@@ -245,6 +248,9 @@
     </ClInclude>
     <ClInclude Include="Source\VulkanUploadContext.h">
       <Filter>Source\Core\VulkanCore</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\GeometryPass.h">
+      <Filter>Source\Passes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

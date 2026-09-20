@@ -25,7 +25,9 @@
 
 #include "Module.h"
 #include "IVulkanSwapchainListener.h"
+
 #include "ImGuiPass.h"
+#include "GeometryPass.h"
 
 #include <vulkan/vulkan.h>
 
@@ -36,12 +38,13 @@ class VulkanModule;
 class RenderModule final : public Module, public IVulkanSwapchainListener
 {
 private:
-    VulkanModule& vulkanModule;
+    VulkanModule&                   vulkanModule;
 
     VkRenderPass                    renderPass = VK_NULL_HANDLE;
     std::vector<VkFramebuffer>      swapchainFramebuffers;
 
     ImGuiPass                       imguiPass;
+    GeometryPass                    geometryPass;
 
     bool                            renderPassOpen = false;
     bool                            frameActive = false;

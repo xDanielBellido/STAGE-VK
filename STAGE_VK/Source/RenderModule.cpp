@@ -18,6 +18,13 @@ bool RenderModule::Init()
     CreateRenderPass();
     CreateFramebuffers();
 
+    if (!geometryPass.Init(vulkanModule.GetAllocator(), vulkanModule.GetUploadContext()))
+    {
+        geometryPass.CleanUp();
+        DestroyRenderTargets();
+        return false;
+    }
+
     ImGuiPassInitInfo imguiInfo{};
     imguiInfo.window = app->GetWindow().GetNativeHandle();
     imguiInfo.apiVersion = vulkanModule.GetApiVersion();
@@ -31,6 +38,9 @@ bool RenderModule::Init()
 
     if (!imguiPass.Init(imguiInfo))
     {
+        imguiPass.CleanUp();
+        geometryPass.CleanUp();
+        DestroyRenderTargets();
         return false;
     }
 
@@ -112,6 +122,7 @@ bool RenderModule::CleanUp()
     vulkanModule.UnregisterSwapchainListener(this);
 
     imguiPass.CleanUp();
+    geometryPass.CleanUp();
     DestroyRenderTargets();
 
     renderPassOpen = false;
@@ -119,7 +130,6 @@ bool RenderModule::CleanUp()
 
     return true;
 }
-
 void RenderModule::CreateRenderPass()
 {
     VkAttachmentDescription colorAttachment{};
