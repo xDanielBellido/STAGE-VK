@@ -18,7 +18,8 @@
 #pragma once
 
 #include "VulkanBuffer.h"
-#include "VulkanShaderModule.h"
+
+#include <vulkan/vulkan.h>
 
 #include <cstdint>
 
@@ -36,17 +37,25 @@ private:
         float z;
     };
 
-    VulkanBuffer    vertexBuffer;
-    uint32_t        vertexCount = 0;
+    VkDevice            device = VK_NULL_HANDLE;
+
+    VulkanBuffer        vertexBuffer;
+    uint32_t            vertexCount = 0;
+
+    VkPipelineLayout    pipelineLayout = VK_NULL_HANDLE;
+    VkPipeline          graphicsPipeline = VK_NULL_HANDLE;
 
 public:
 
-    // Lifetime
-    bool            Init(VkDevice device, const VulkanAllocator& allocator, VulkanUploadContext& uploadContext);
-    void            CleanUp();
+                        // Lifetime
+    bool                Init(VkDevice device, VkRenderPass renderPass, const VulkanAllocator& allocator, VulkanUploadContext& uploadContext);
+    void                CleanUp();
 
 private:
 
-    // Geometry Resources
-    void            CreateTriangleVertexBuffer(const VulkanAllocator& allocator, VulkanUploadContext& uploadContext);
+                        // Geometry Resources
+    void                CreateTriangleVertexBuffer(const VulkanAllocator& allocator, VulkanUploadContext& uploadContext);
+
+                        // Graphics Pipeline
+    bool                CreateGraphicsPipeline(VkRenderPass renderPass);
 };
