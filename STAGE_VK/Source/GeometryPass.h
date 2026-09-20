@@ -51,6 +51,9 @@ public:
     bool                Init(VkDevice device, VkRenderPass renderPass, const VulkanAllocator& allocator, VulkanUploadContext& uploadContext);
     void                CleanUp();
 
+                        // Rendering
+    void                Record(VkCommandBuffer commandBuffer, VkExtent2D extent);
+
 private:
 
                         // Geometry Resources

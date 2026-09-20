@@ -93,6 +93,8 @@ void RenderModule::Render()
     app->GetProfiler().RecordRenderPass();
 
     renderPassOpen = true;
+
+    geometryPass.Record(commandBuffer, vulkanModule.GetSwapchainExtent());
 }
 
 void RenderModule::PostRender()

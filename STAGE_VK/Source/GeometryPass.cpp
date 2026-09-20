@@ -46,6 +46,39 @@ void GeometryPass::CleanUp()
     device = VK_NULL_HANDLE;
 }
 
+void GeometryPass::Record(VkCommandBuffer commandBuffer, VkExtent2D extent)
+{
+    if (commandBuffer == VK_NULL_HANDLE || graphicsPipeline == VK_NULL_HANDLE || !vertexBuffer.IsValid())
+    {
+        return;
+    }
+
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(extent.width);
+    viewport.height = static_cast<float>(extent.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = extent;
+
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+    VkBuffer buffers[] = { vertexBuffer.GetBuffer() };
+    VkDeviceSize offsets[] = { 0 };
+
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
+
+    vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
+}
+
 void GeometryPass::CreateTriangleVertexBuffer(const VulkanAllocator& allocator, VulkanUploadContext& uploadContext)
 {
     static constexpr std::array<Vertex, 3> vertices =
