@@ -18,7 +18,7 @@ bool RenderModule::Init()
     CreateRenderPass();
     CreateFramebuffers();
 
-    if (!geometryPass.Init(vulkanModule.GetAllocator(), vulkanModule.GetUploadContext()))
+    if (!geometryPass.Init(vulkanModule.GetDevice(), vulkanModule.GetAllocator(), vulkanModule.GetUploadContext()))
     {
         geometryPass.CleanUp();
         DestroyRenderTargets();

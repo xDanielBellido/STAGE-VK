@@ -47,6 +47,9 @@
     <Filter Include="ThirdParty\VMA">
       <UniqueIdentifier>{56c29885-359a-4407-87ce-f689a7d35df4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Shaders">
+      <UniqueIdentifier>{32bed062-a0d2-43db-a6ac-cb55b8fe1a7d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\main.cpp">
@@ -135,6 +138,9 @@
     </ClCompile>
     <ClCompile Include="Source\GeometryPass.cpp">
       <Filter>Source\Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\VulkanShaderModule.cpp">
+      <Filter>Source\Core\VulkanCore</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -252,5 +258,16 @@
     <ClInclude Include="Source\GeometryPass.h">
       <Filter>Source\Passes</Filter>
     </ClInclude>
+    <ClInclude Include="Source\VulkanShaderModule.h">
+      <Filter>Source\Core\VulkanCore</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="Source\GeometryVS.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Source\GeometryPS.hlsl">
+      <Filter>Source\Shaders</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

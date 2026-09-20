@@ -167,6 +167,7 @@
     <ClCompile Include="Source\VulkanDevice.cpp" />
     <ClCompile Include="Source\VulkanGpuProfiler.cpp" />
     <ClCompile Include="Source\VulkanModule.cpp" />
+    <ClCompile Include="Source\VulkanShaderModule.cpp" />
     <ClCompile Include="Source\VulkanSwapchain.cpp" />
     <ClCompile Include="Source\VulkanUploadContext.cpp" />
     <ClCompile Include="Source\Window.cpp" />
@@ -207,9 +208,50 @@
     <ClInclude Include="Source\VulkanDevice.h" />
     <ClInclude Include="Source\VulkanGpuProfiler.h" />
     <ClInclude Include="Source\VulkanModule.h" />
+    <ClInclude Include="Source\VulkanShaderModule.h" />
     <ClInclude Include="Source\VulkanSwapchain.h" />
     <ClInclude Include="Source\VulkanUploadContext.h" />
     <ClInclude Include="Source\Window.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="Source\GeometryPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">if not exist "$(ProjectDir)CompiledShaders" mkdir "$(ProjectDir)CompiledShaders"
+"$(VULKAN_SDK)\Bin\dxc.exe" -spirv -T ps_6_0 -E main -Fo "$(ProjectDir)CompiledShaders\GeometryPS.spv" "$(ProjectDir)Source\GeometryPS.hlsl"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)CompiledShaders\GeometryPS.spv;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">if not exist "$(ProjectDir)CompiledShaders" mkdir "$(ProjectDir)CompiledShaders"
+"$(VULKAN_SDK)\Bin\dxc.exe" -spirv -T ps_6_0 -E main -Fo "$(ProjectDir)CompiledShaders\GeometryPS.spv" "$(ProjectDir)Source\GeometryPS.hlsl"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)CompiledShaders\GeometryPS.spv;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">if not exist "$(ProjectDir)CompiledShaders" mkdir "$(ProjectDir)CompiledShaders"
+"$(VULKAN_SDK)\Bin\dxc.exe" -spirv -T ps_6_0 -E main -Fo "$(ProjectDir)CompiledShaders\GeometryPS.spv" "$(ProjectDir)Source\GeometryPS.hlsl"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)CompiledShaders\GeometryPS.spv;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">if not exist "$(ProjectDir)CompiledShaders" mkdir "$(ProjectDir)CompiledShaders"
+"$(VULKAN_SDK)\Bin\dxc.exe" -spirv -T ps_6_0 -E main -Fo "$(ProjectDir)CompiledShaders\GeometryPS.spv" "$(ProjectDir)Source\GeometryPS.hlsl"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)CompiledShaders\GeometryPS.spv;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="Source\GeometryVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">if not exist "$(ProjectDir)CompiledShaders" mkdir "$(ProjectDir)CompiledShaders"
+"$(VULKAN_SDK)\Bin\dxc.exe" -spirv -T vs_6_0 -E main -Fo "$(ProjectDir)CompiledShaders\GeometryVS.spv" "$(ProjectDir)Source\GeometryVS.hlsl"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)CompiledShaders\GeometryVS.spv;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">if not exist "$(ProjectDir)CompiledShaders" mkdir "$(ProjectDir)CompiledShaders"
+"$(VULKAN_SDK)\Bin\dxc.exe" -spirv -T vs_6_0 -E main -Fo "$(ProjectDir)CompiledShaders\GeometryVS.spv" "$(ProjectDir)Source\GeometryVS.hlsl"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)CompiledShaders\GeometryVS.spv;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">if not exist "$(ProjectDir)CompiledShaders" mkdir "$(ProjectDir)CompiledShaders"
+"$(VULKAN_SDK)\Bin\dxc.exe" -spirv -T vs_6_0 -E main -Fo "$(ProjectDir)CompiledShaders\GeometryVS.spv" "$(ProjectDir)Source\GeometryVS.hlsl"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)CompiledShaders\GeometryVS.spv;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">if not exist "$(ProjectDir)CompiledShaders" mkdir "$(ProjectDir)CompiledShaders"
+"$(VULKAN_SDK)\Bin\dxc.exe" -spirv -T vs_6_0 -E main -Fo "$(ProjectDir)CompiledShaders\GeometryVS.spv" "$(ProjectDir)Source\GeometryVS.hlsl"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)CompiledShaders\GeometryVS.spv;%(Outputs)</Outputs>
+    </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

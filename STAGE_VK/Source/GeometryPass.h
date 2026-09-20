@@ -18,6 +18,7 @@
 #pragma once
 
 #include "VulkanBuffer.h"
+#include "VulkanShaderModule.h"
 
 #include <cstdint>
 
@@ -41,7 +42,7 @@ private:
 public:
 
     // Lifetime
-    bool            Init(const VulkanAllocator& allocator, VulkanUploadContext& uploadContext);
+    bool            Init(VkDevice device, const VulkanAllocator& allocator, VulkanUploadContext& uploadContext);
     void            CleanUp();
 
 private:

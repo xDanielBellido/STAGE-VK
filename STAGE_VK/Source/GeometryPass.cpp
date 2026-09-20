@@ -5,9 +5,22 @@
 
 #include <array>
 
-bool GeometryPass::Init(const VulkanAllocator& allocator, VulkanUploadContext& uploadContext)
+bool GeometryPass::Init(VkDevice device, const VulkanAllocator& allocator, VulkanUploadContext& uploadContext)
 {
     CreateTriangleVertexBuffer(allocator, uploadContext);
+
+    VulkanShaderModule vertexShader;
+    VulkanShaderModule fragmentShader;
+
+    if (!vertexShader.Init(device, "CompiledShaders/GeometryVS.spv"))
+    {
+        return false;
+    }
+
+    if (!fragmentShader.Init(device, "CompiledShaders/GeometryPS.spv"))
+    {
+        return false;
+    }
 
     return true;
 }
