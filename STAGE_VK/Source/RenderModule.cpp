@@ -231,6 +231,8 @@ void RenderModule::BeforeSwapchainRecreate()
     frameActive = false;
 
     imguiPass.BeforeSwapchainRecreate();
+    geometryPass.BeforeRenderPassRecreate();
+
     DestroyRenderTargets();
 }
 
@@ -238,6 +240,11 @@ void RenderModule::AfterSwapchainRecreate()
 {
     CreateRenderPass();
     CreateFramebuffers();
+
+    if (!geometryPass.AfterRenderPassRecreate(renderPass))
+    {
+        throw std::runtime_error("Failed to recreate GeometryPass graphics pipeline.");
+    }
 
     imguiPass.AfterSwapchainRecreate(renderPass, vulkanModule.GetSwapchainImageCount());
 }

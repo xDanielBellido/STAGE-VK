@@ -18,8 +18,15 @@ bool GeometryPass::Init(VkDevice device, VkRenderPass renderPass, const VulkanAl
 
     CreateTriangleVertexBuffer(allocator, uploadContext);
 
+    if (!CreatePipelineLayout())
+    {
+        CleanUp();
+        return false;
+    }
+
     if (!CreateGraphicsPipeline(renderPass))
     {
+        CleanUp();
         return false;
     }
 
@@ -28,17 +35,8 @@ bool GeometryPass::Init(VkDevice device, VkRenderPass renderPass, const VulkanAl
 
 void GeometryPass::CleanUp()
 {
-    if (graphicsPipeline != VK_NULL_HANDLE && device != VK_NULL_HANDLE)
-    {
-        vkDestroyPipeline(device, graphicsPipeline, nullptr);
-        graphicsPipeline = VK_NULL_HANDLE;
-    }
-
-    if (pipelineLayout != VK_NULL_HANDLE && device != VK_NULL_HANDLE)
-    {
-        vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-        pipelineLayout = VK_NULL_HANDLE;
-    }
+    DestroyGraphicsPipeline();
+    DestroyPipelineLayout();
 
     vertexBuffer.CleanUp();
 
@@ -79,6 +77,21 @@ void GeometryPass::Record(VkCommandBuffer commandBuffer, VkExtent2D extent)
     vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
 }
 
+void GeometryPass::BeforeRenderPassRecreate()
+{
+    DestroyGraphicsPipeline();
+}
+
+bool GeometryPass::AfterRenderPassRecreate(VkRenderPass renderPass)
+{
+    if (renderPass == VK_NULL_HANDLE)
+    {
+        return false;
+    }
+
+    return CreateGraphicsPipeline(renderPass);
+}
+
 void GeometryPass::CreateTriangleVertexBuffer(const VulkanAllocator& allocator, VulkanUploadContext& uploadContext)
 {
     static constexpr std::array<Vertex, 3> vertices =
@@ -95,6 +108,19 @@ void GeometryPass::CreateTriangleVertexBuffer(const VulkanAllocator& allocator, 
     uploadContext.UploadBuffer(allocator, vertexBuffer, vertices.data(), bufferSize, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
 
     vertexCount = static_cast<uint32_t>(vertices.size());
+}
+
+bool GeometryPass::CreatePipelineLayout()
+{
+    if (pipelineLayout != VK_NULL_HANDLE)
+    {
+        return true;
+    }
+
+    VkPipelineLayoutCreateInfo layoutInfo{};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+
+    return vkCreatePipelineLayout(device, &layoutInfo, nullptr, &pipelineLayout) == VK_SUCCESS;
 }
 
 bool GeometryPass::CreateGraphicsPipeline(VkRenderPass renderPass)
@@ -196,14 +222,6 @@ bool GeometryPass::CreateGraphicsPipeline(VkRenderPass renderPass)
     dynamicState.dynamicStateCount = 2;
     dynamicState.pDynamicStates = dynamicStates;
 
-    VkPipelineLayoutCreateInfo layoutInfo{};
-    layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-
-    if (vkCreatePipelineLayout(device, &layoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
-    {
-        return false;
-    }
-
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 
@@ -226,12 +244,32 @@ bool GeometryPass::CreateGraphicsPipeline(VkRenderPass renderPass)
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = -1;
 
-    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
+    VkPipeline newPipeline = VK_NULL_HANDLE;
+
+    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &newPipeline) != VK_SUCCESS)
     {
-        vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-        pipelineLayout = VK_NULL_HANDLE;
         return false;
     }
 
+    graphicsPipeline = newPipeline;
+
     return true;
+}
+
+void GeometryPass::DestroyGraphicsPipeline()
+{
+    if (graphicsPipeline != VK_NULL_HANDLE && device != VK_NULL_HANDLE)
+    {
+        vkDestroyPipeline(device, graphicsPipeline, nullptr);
+        graphicsPipeline = VK_NULL_HANDLE;
+    }
+}
+
+void GeometryPass::DestroyPipelineLayout()
+{
+    if (pipelineLayout != VK_NULL_HANDLE && device != VK_NULL_HANDLE)
+    {
+        vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+        pipelineLayout = VK_NULL_HANDLE;
+    }
 }

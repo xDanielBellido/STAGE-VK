@@ -54,11 +54,18 @@ public:
                         // Rendering
     void                Record(VkCommandBuffer commandBuffer, VkExtent2D extent);
 
+    // Render Pass Lifecycle
+    void                BeforeRenderPassRecreate();
+    bool                AfterRenderPassRecreate(VkRenderPass renderPass);
+
 private:
 
                         // Geometry Resources
     void                CreateTriangleVertexBuffer(const VulkanAllocator& allocator, VulkanUploadContext& uploadContext);
 
                         // Graphics Pipeline
+    bool                CreatePipelineLayout();
     bool                CreateGraphicsPipeline(VkRenderPass renderPass);
+    void                DestroyGraphicsPipeline();
+    void                DestroyPipelineLayout();
 };
